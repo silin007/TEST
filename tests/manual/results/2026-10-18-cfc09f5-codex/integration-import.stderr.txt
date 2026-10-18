@@ -1,0 +1,9 @@
+WARNING: No Bone2D children of node Head. Cannot calculate bone length or angle reliably.
+Using transform rotation for bone angle.
+   at: calculate_length_and_rotation (scene/2d/skeleton_2d.cpp:451)
+WARNING: No Bone2D children of node ArmLeft. Cannot calculate bone length or angle reliably.
+Using transform rotation for bone angle.
+   at: calculate_length_and_rotation (scene/2d/skeleton_2d.cpp:451)
+WARNING: No Bone2D children of node ArmRight. Cannot calculate bone length or angle reliably.
+Using transform rotation for bone angle.
+   at: calculate_length_and_rotation (scene/2d/skeleton_2d.cpp:451)

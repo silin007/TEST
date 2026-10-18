@@ -1,0 +1,72 @@
+{
+	"memory": {},
+	"pet": {
+		"attributes": {
+			"charm": 0,
+			"creativity": 0,
+			"knowledge": 0,
+			"stamina": 0
+		},
+		"created_at": "2026-10-18T08:07:55Z",
+		"current_action": "react_happy",
+		"display_name": "MOTE",
+		"last_simulated_at": "2026-10-18T08:08:57Z",
+		"needs": {
+			"comfort": 80.0,
+			"energy": 80.0,
+			"hunger": 20.0,
+			"social_need": 20.0
+		},
+		"personality": {
+			"activity": 0.5,
+			"courage": 0.5,
+			"curiosity": 0.5,
+			"sociability": 0.5
+		},
+		"pet_id": "pet-176da483644b",
+		"schema_version": 1,
+		"simulation_elapsed_seconds": 0.0,
+		"updated_at": "2026-10-18T08:08:57Z"
+	},
+	"revision": 4,
+	"save_id": "local-save-1db5dd6d70b5",
+	"saved_at": "2026-10-18T08:08:57Z",
+	"schema_version": 1,
+	"settings": {
+		"floating_rect": {
+			"h": 256,
+			"w": 256,
+			"x": 3840,
+			"y": 100
+		},
+		"focus_return_mode": "FLOATING",
+		"focus_return_mouse": "INTERACTIVE",
+		"full_rect": {
+			"h": 640,
+			"w": 960,
+			"x": 100,
+			"y": 100
+		},
+		"mode": "FLOATING",
+		"mouse_preference": "INTERACTIVE",
+		"notifications_enabled": false,
+		"previous_visible_mode": "FLOATING",
+		"screen_hint": {
+			"index": 0,
+			"resolution": {
+				"h": 2160,
+				"w": 3840
+			},
+			"scale": null,
+			"usable_rect": {
+				"h": 2088,
+				"w": 3840,
+				"x": 3840,
+				"y": 0
+			}
+		}
+	},
+	"sync": {
+		"enabled": false
+	}
+}

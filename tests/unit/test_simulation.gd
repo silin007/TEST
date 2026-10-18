@@ -9,13 +9,18 @@ func _initialize() -> void:
 	_test_sim01_idle_600_ticks()
 	_test_sim01_rest()
 	_test_sim02_fps_equivalence()
+	_test_sim02_accumulator_no_loss()
 	_test_pet03_low_energy_rest()
 	_test_pet03_high_activity_walk()
 	_test_pet03_high_curiosity_look()
 	_test_pet04_happy_reward_once()
 	_test_pet04_happy_failure_no_reward()
+	_test_pet04_stale_event_after_cancel()
+	_test_pet04_closed_instance_rejected()
 	_test_gap_no_punishment()
+	_test_gap_clears_accumulator()
 	_test_wall_clock_rollback()
+	_test_can_walk_injection()
 	if _failures == 0:
 		print("ALL SIM/PET TESTS PASSED")
 		quit(0)
@@ -94,6 +99,33 @@ func _test_sim02_fps_equivalence() -> void:
 		results.append(float(sim.get_snapshot()["needs"]["energy"]))
 	_check(_close(results[0], results[1], 0.002), "15FPS vs 30FPS energy 接近（%f vs %f）" % [results[0], results[1]])
 	_check(_close(results[1], results[2], 0.002), "30FPS vs 60FPS energy 接近（%f vs %f）" % [results[1], results[2]])
+
+
+## SIM-02 回归（P0-002）：普通帧率下模拟时间不得丢失。
+## 缺陷原状：把累加器写成 advance_time 的局部变量，每帧余数被丢弃，
+## 60FPS（dt≈0.0167）永远凑不满 0.1s 的 tick，模拟实际停摆。
+## 本用例逐项验证 tick / elapsed / needs 三者同时推进，缺一即失败。
+func _test_sim02_accumulator_no_loss() -> void:
+	print("SIM-02 回归(P0-002): 帧率余数不丢失")
+	for fps: int in [60, 75, 144]:
+		var dt: float = 1.0 / float(fps)
+		var frames: int = fps * 60  # 恰好 60 秒真实时间
+		var ctx: Dictionary = _make_sim(PetState.ACTION_IDLE)
+		var sim: PetSimulation = ctx["sim"]
+		for i: int in range(frames):
+			sim.advance_time(dt)
+		var snap: Dictionary = sim.get_snapshot()
+		# 60 秒 ÷ 0.1 = 600 tick；允许 ±1 的浮点边界误差
+		var ticks: int = sim.get_tick_count()
+		_check(absi(ticks - 600) <= 1, "%dFPS/60s tick ≈600（实际 %d）" % [fps, ticks])
+		var elapsed: float = float(snap["simulation_elapsed_seconds"])
+		_check(_close(elapsed, 60.0, 0.15), "%dFPS/60s elapsed ≈60s（实际 %f）" % [fps, elapsed])
+		# needs 必须真的变化：若模拟停摆，energy 会停在 100
+		var energy: float = float((snap["needs"] as Dictionary)["energy"])
+		_check(energy < 99.0, "%dFPS/60s needs 确实推进（energy=%f < 99）" % [fps, energy])
+		# 余数必须始终小于一个步长，不能无限累积
+		_check(sim.get_accumulator() < PetSimulation.SIM_DT + 0.0001,
+			"%dFPS 余数 < SIM_DT（实际 %f）" % [fps, sim.get_accumulator()])
 
 
 ## PET-03①：energy=20 运行 30 秒，应开始 rest 且 energy 恢复
@@ -253,3 +285,120 @@ func _test_wall_clock_rollback() -> void:
 	# 注入一个 24h 墙钟回拨 → 用大 dt 模拟（>5s 断点，不补算）
 	sim.advance_time(86400.0)
 	_check(sim.get_tick_count() == before_ticks, "回拨后 tick 不异常增加（%d == %d）" % [sim.get_tick_count(), before_ticks])
+
+
+## SIM-03 回归：断点后累加器必须清零，不能把断点前残留的余数续上
+func _test_gap_clears_accumulator() -> void:
+	print("SIM-03 回归: 断点清空累加器")
+	var ctx: Dictionary = _make_sim(PetState.ACTION_IDLE)
+	var sim: PetSimulation = ctx["sim"]
+	sim.advance_time(0.07)  # 留下 0.07 余数
+	_check(sim.get_accumulator() > 0.0, "断点前存在余数（%f）" % sim.get_accumulator())
+	sim.advance_time(30.0)  # >5s 断点
+	_check(_close(sim.get_accumulator(), 0.0), "断点后余数清零（%f）" % sim.get_accumulator())
+
+
+## PET-04 回归（P0-003）：被取消的旧动作，其晚到事件不得发奖。
+## 缺陷原状：instance_id 复用计数器（取消后从 1 重新开始），
+## 旧动作的迟到事件会命中新动作的 id，把奖励错发给另一实例。
+func _test_pet04_stale_event_after_cancel() -> void:
+	print("PET-04 回归(P0-003): 取消后旧事件不发奖")
+	var state := PetState.new()
+	state.needs["energy"] = 80.0
+	state.needs["comfort"] = 50.0
+	state.needs["social_need"] = 50.0
+	var ai := UtilityAI.new()
+	var exec := ActionExecutor.new()
+	var sim := PetSimulation.new(state, ai, exec)
+
+	var first: Dictionary = sim.request_action(PetState.ACTION_REACT_HAPPY)
+	_check(bool(first["accepted"]), "第一次 happy 被接受")
+	var first_id: int = int(first["instance_id"])
+
+	# 取消该动作（例如时间断点或退出）。取消会给 happy 设 2 秒冷却（架构 §5.2），
+	# 因此先推进过冷却，再发起第二个 happy —— 这是模型规定行为，不是缺陷。
+	exec.cancel_current_action("test_cancel")
+	for i: int in range(25):
+		sim.advance_time(0.1)  # 2.5 秒 > HAPPY_COOLDOWN
+	var second: Dictionary = sim.request_action(PetState.ACTION_REACT_HAPPY)
+	_check(bool(second["accepted"]), "第二次 happy 被接受（冷却已过）")
+	var second_id: int = int(second["instance_id"])
+	_check(second_id != first_id, "实例 ID 单调递增不重复（%d vs %d）" % [first_id, second_id])
+
+	var before: Dictionary = sim.get_snapshot()
+	var comfort_before: float = float((before["needs"] as Dictionary)["comfort"])
+
+	# 旧实例的迟到成功事件：必须被拒绝，不得改动需求
+	sim.on_action_event({
+		"action": PetState.ACTION_REACT_HAPPY,
+		"instance_id": first_id,
+		"success": true,
+		"reason": "stale",
+	})
+	var after: Dictionary = sim.get_snapshot()
+	_check(_close(float((after["needs"] as Dictionary)["comfort"]), comfort_before),
+		"旧实例事件不发奖（comfort 保持 %f）" % comfort_before)
+	_check(sim.get_current_action() == PetState.ACTION_REACT_HAPPY,
+		"旧实例事件不结束当前动作（当前 %s）" % sim.get_current_action())
+
+	# 当前实例的正常事件仍应生效
+	sim.on_action_event({
+		"action": PetState.ACTION_REACT_HAPPY,
+		"instance_id": second_id,
+		"success": true,
+		"reason": "ok",
+	})
+	var final_snap: Dictionary = sim.get_snapshot()
+	_check(float((final_snap["needs"] as Dictionary)["comfort"]) > comfort_before,
+		"当前实例事件正常发奖（comfort=%f）" % float((final_snap["needs"] as Dictionary)["comfort"]))
+
+
+## PET-04 回归：已结束实例的重复事件仍被拒绝（关闭表生效）
+func _test_pet04_closed_instance_rejected() -> void:
+	print("PET-04 回归(P0-003): 已关闭实例拒绝重放")
+	var state := PetState.new()
+	state.needs["energy"] = 80.0
+	state.needs["comfort"] = 50.0
+	state.needs["social_need"] = 50.0
+	var ai := UtilityAI.new()
+	var exec := ActionExecutor.new()
+	var sim := PetSimulation.new(state, ai, exec)
+	var result: Dictionary = sim.request_action(PetState.ACTION_REACT_HAPPY)
+	var instance_id: int = int(result["instance_id"])
+	sim.on_action_event({"action": PetState.ACTION_REACT_HAPPY, "instance_id": instance_id, "success": true, "reason": "ok"})
+	var after_first: float = float((sim.get_snapshot()["needs"] as Dictionary)["comfort"])
+	# 重放同一实例事件
+	sim.on_action_event({"action": PetState.ACTION_REACT_HAPPY, "instance_id": instance_id, "success": true, "reason": "replay"})
+	var after_replay: float = float((sim.get_snapshot()["needs"] as Dictionary)["comfort"])
+	_check(_close(after_replay, after_first), "重放已关闭实例不发奖（%f == %f）" % [after_replay, after_first])
+	# 非法 instance_id（<=0）必须被忽略
+	sim.on_action_event({"action": PetState.ACTION_REACT_HAPPY, "instance_id": 0, "success": true, "reason": "zero"})
+	_check(_close(float((sim.get_snapshot()["needs"] as Dictionary)["comfort"]), after_replay),
+		"instance_id<=0 的事件被忽略")
+
+
+## 环境注入（报告 §4「环境传递」风险项）：set_can_walk 后 walk 能否启动由注入值决定。
+## 为了让 walk 成为最优候选，把 activity 拉满以抬高 walk 分数；并对比注入前后的差异。
+func _test_can_walk_injection() -> void:
+	print("环境注入: set_can_walk 生效")
+	var actions_blocked := _collect_actions(false)
+	_check(not actions_blocked.has(PetState.ACTION_WALK), "can_walk=false 时不启动 walk（%d 个动作）" % actions_blocked.size())
+	var actions_allowed := _collect_actions(true)
+	_check(actions_allowed.has(PetState.ACTION_WALK), "can_walk=true 时 walk 可启动（%d 个动作）" % actions_allowed.size())
+
+
+## 在给定 can_walk 下跑 5 秒，收集实际启动的动作序列
+func _collect_actions(can_walk: bool) -> Array[StringName]:
+	var state := PetState.new()
+	state.needs["energy"] = 80.0
+	state.personality["activity"] = 1.0
+	state.personality["curiosity"] = 0.0
+	var sim := PetSimulation.new(state, UtilityAI.new(), ActionExecutor.new())
+	sim.set_can_walk(can_walk)
+	var actions: Array[StringName] = []
+	sim.action_started.connect(func(action: StringName, _id: int) -> void:
+		actions.append(action)
+	)
+	for i: int in range(50):
+		sim.advance_time(0.1)
+	return actions

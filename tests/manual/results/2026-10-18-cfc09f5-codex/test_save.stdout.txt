@@ -1,0 +1,105 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS SAVE-01 首次保存成功
+PASS SAVE-01 首次 revision=1，实际=1
+PASS SAVE-01 第二次保存成功
+PASS SAVE-01 每次提交 revision+1，实际=2
+PASS SAVE-01 save_id 保持不变
+PASS SAVE-01 加载状态 OK，实际=OK
+PASS SAVE-01 pet_id 恢复
+PASS SAVE-01 created_at 不因加载改变
+PASS SAVE-01 needs.energy 往返一致
+PASS SAVE-01 needs.hunger 往返一致
+PASS SAVE-01 personality 往返一致
+PASS SAVE-01 current_action 重启为 idle
+PASS SAVE-01 memory={}
+PASS SAVE-01 sync.enabled=false
+PASS SAVE-01 settings.mode 恢复
+PASS SAVE-01 负坐标矩形被接受且往返一致
+PASS SAVE-01 提交后备份存在
+PASS SAVE-01 主档存在
+PASS SAVE-02 空目录返回 MISSING，实际=MISSING
+PASS SAVE-02 无候选
+PASS SAVE-07 拒绝缺少 pet_id
+PASS SAVE-07 拒绝 needs 为字符串
+PASS SAVE-07 拒绝 needs 越界
+PASS SAVE-07 拒绝非法动作枚举
+PASS SAVE-07 拒绝非有限数值
+PASS SAVE-07 合法 pet 通过
+PASS SAVE-07 拒绝 revision<1
+PASS SAVE-07 拒绝宽高非正
+PASS SAVE-07 拒绝 previous_visible_mode=HIDDEN
+PASS SAVE-07 拒绝 focus_return_mode=FOCUS
+PASS SAVE-07 合法 settings 通过
+PASS SAVE-07 非法快照写入被拒绝
+PASS SAVE-07 非法快照未落盘
+PASS SAVE-07 错误阶段为 VALIDATE
+PASS SAVE-07 未知更高 schema 返回 UNSUPPORTED_VERSION，实际=UNSUPPORTED_VERSION
+PASS SAVE-07 保留原档
+PASS SAVE-07 不降级写回（字节未变）
+PASS SAVE-07 版本拒绝后可显式重建
+  [注] 接下来若出现 ERROR / WARNING 属预期：主档被故意写成非法 JSON，隔离与候选恢复路径会打印解析错误
+PASS SAVE-03 建立主档（revision 1：energy 62.5）
+PASS SAVE-03 第二次提交（revision 2：energy 11.0；备份保留上一代）
+PASS SAVE-03 主档损坏返回 RECOVERABLE，实际=RECOVERABLE
+PASS SAVE-03 列出可恢复候选
+PASS SAVE-03 已隔离损坏原件
+PASS SAVE-03 隔离副本与损坏原字节一致
+PASS SAVE-03 备份候选为上一代 revision=1，实际=1
+PASS SAVE-03 候选路径可用
+PASS SAVE-03 从备份恢复成功
+PASS SAVE-03 恢复后加载 OK
+PASS SAVE-03 恢复值来自有效备份（energy 62.5）
+PASS SAVE-03 沿用备份 revision，实际=1 期望=1
+  [注] 接下来若出现 ERROR / WARNING 属预期：主档/备份/临时档全部被故意损坏，解析错误与自动保存停止均为预期
+PASS SAVE-04 建立夹具
+PASS SAVE-04 建立备份
+PASS SAVE-04 全部损坏返回 INVALID，实际=INVALID
+PASS SAVE-04 不覆盖损坏原件
+PASS SAVE-04 停止自动保存
+PASS SAVE-04 停止后拒绝自动写入
+  [注] 接下来若出现 ERROR / WARNING 属预期：逐阶段注入保存故障，ERROR 是注入点被触发的证据
+PASS SAVE-05[TMP_WRITE] 建立有效旧代
+PASS SAVE-05[TMP_WRITE] 建立第二有效代
+PASS SAVE-06[TMP_WRITE] 注入故障后保存失败
+PASS SAVE-06[TMP_WRITE] 错误阶段记录正确，实际=TMP_WRITE
+PASS SAVE-06[TMP_WRITE] 失败不递增 revision
+PASS SAVE-06[TMP_WRITE] 至少保留一份完整有效旧代
+PASS SAVE-06[TMP_WRITE] 解除故障后重试成功
+PASS SAVE-06[TMP_WRITE] 重试仅递增一次，实际=3
+PASS SAVE-05[TMP_VERIFY] 建立有效旧代
+PASS SAVE-05[TMP_VERIFY] 建立第二有效代
+PASS SAVE-06[TMP_VERIFY] 注入故障后保存失败
+PASS SAVE-06[TMP_VERIFY] 错误阶段记录正确，实际=TMP_VERIFY
+PASS SAVE-06[TMP_VERIFY] 失败不递增 revision
+PASS SAVE-06[TMP_VERIFY] 至少保留一份完整有效旧代
+PASS SAVE-06[TMP_VERIFY] 解除故障后重试成功
+PASS SAVE-06[TMP_VERIFY] 重试仅递增一次，实际=3
+PASS SAVE-05[BACKUP] 建立有效旧代
+PASS SAVE-05[BACKUP] 建立第二有效代
+PASS SAVE-06[BACKUP] 注入故障后保存失败
+PASS SAVE-06[BACKUP] 错误阶段记录正确，实际=BACKUP
+PASS SAVE-06[BACKUP] 失败不递增 revision
+PASS SAVE-06[BACKUP] 至少保留一份完整有效旧代
+PASS SAVE-06[BACKUP] 解除故障后重试成功
+PASS SAVE-06[BACKUP] 重试仅递增一次，实际=3
+PASS SAVE-05[REPLACE] 建立有效旧代
+PASS SAVE-05[REPLACE] 建立第二有效代
+PASS SAVE-06[REPLACE] 注入故障后保存失败
+PASS SAVE-06[REPLACE] 错误阶段记录正确，实际=REPLACE
+PASS SAVE-06[REPLACE] 失败不递增 revision
+PASS SAVE-06[REPLACE] 至少保留一份完整有效旧代
+PASS SAVE-06[REPLACE] 解除故障后重试成功
+PASS SAVE-06[REPLACE] 重试仅递增一次，实际=3
+PASS SAVE-05[FINAL_VERIFY] 建立有效旧代
+PASS SAVE-05[FINAL_VERIFY] 建立第二有效代
+PASS SAVE-06[FINAL_VERIFY] 注入故障后保存失败
+PASS SAVE-06[FINAL_VERIFY] 错误阶段记录正确，实际=FINAL_VERIFY
+PASS SAVE-06[FINAL_VERIFY] 失败不递增 revision
+PASS SAVE-06[FINAL_VERIFY] 至少保留一份完整有效旧代
+PASS SAVE-06[FINAL_VERIFY] 解除故障后重试成功
+PASS SAVE-06[FINAL_VERIFY] 重试仅递增一次，实际=3
+PASS SAVE-07 migrate v1→v1 直接通过
+PASS SAVE-07 migrate 未知更高版本明确拒绝
+PASS SAVE-07 migrate v0 明确拒绝（P0 不提供虚构转换器）
+ALL SAVE TESTS PASSED

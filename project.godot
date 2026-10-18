@@ -33,6 +33,9 @@ window/transparent=true
 window/borderless=true
 window/always_on_top=true
 window/initial_position="primary_center"
+; P0-004：仅设置 Window.transparent 不会让 Windows 构建获得透明能力，
+; 必须同时允许逐像素透明并让视口背景透明，否则导出后显示为黑色矩形。
+window/per_pixel_transparency/allowed=true
 
 [physics]
 
@@ -42,6 +45,8 @@ window/initial_position="primary_center"
 
 renderer/rendering_method="mobile"
 rendering_device/driver.windows="d3d12"
+; P0-004：视口清屏透明，配合 per_pixel_transparency/allowed 才能看到底层应用
+viewport/transparent_background=true
 
 [debug]
 

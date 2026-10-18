@@ -1,0 +1,38 @@
+WARNING: No Bone2D children of node Head. Cannot calculate bone length or angle reliably.
+Using transform rotation for bone angle.
+   at: calculate_length_and_rotation (scene/2d/skeleton_2d.cpp:451)
+WARNING: No Bone2D children of node ArmLeft. Cannot calculate bone length or angle reliably.
+Using transform rotation for bone angle.
+   at: calculate_length_and_rotation (scene/2d/skeleton_2d.cpp:451)
+WARNING: No Bone2D children of node ArmRight. Cannot calculate bone length or angle reliably.
+Using transform rotation for bone angle.
+   at: calculate_length_and_rotation (scene/2d/skeleton_2d.cpp:451)
+WARNING: [MOTE] 窗口几何已修正：outside_usable_rect
+   at: push_warning (core/variant/variant_utility.cpp:1033)
+   GDScript backtrace (most recent call first):
+       [0] _on_geometry_corrected (res://scripts/app/app_controller.gd:498)
+       [1] validate_geometry (res://scripts/desktop/window_controller.gd:222)
+       [2] apply_mode (res://scripts/desktop/window_controller.gd:79)
+       [3] switch_mode (res://scripts/app/app_controller.gd:192)
+       [4] start_app (res://scripts/app/app_controller.gd:105)
+       [5] _ready (res://scripts/app/app_controller.gd:80)
+WARNING: [MOTE] action_failed react_happy #1: app_shutdown（回退 idle）
+   at: push_warning (core/variant/variant_utility.cpp:1033)
+   GDScript backtrace (most recent call first):
+       [0] _on_action_finished (res://scripts/app/app_controller.gd:308)
+       [1] _on_executor_finished (res://scripts/pet/pet_simulation.gd:215)
+       [2] _finish (res://scripts/pet/action_executor.gd:147)
+       [3] cancel_current_action (res://scripts/pet/action_executor.gd:76)
+       [4] shutdown_app (res://scripts/app/app_controller.gd:580)
+       [5] _process (res://tests/unit/test_app_smoke.gd:70)
+ERROR: [MOTE] 保存失败 { "stage": "TMP_WRITE", "path": "user://saves/save.tmp.json", "code": 13, "message": "故障注入：临时档写入失败" }
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _commit_save (res://scripts/app/app_controller.gd:371)
+       [1] shutdown_app (res://scripts/app/app_controller.gd:582)
+       [2] _process (res://tests/unit/test_app_smoke.gd:70)
+ERROR: [MOTE] 退出保存失败，进程保持可用：{ "stage": "TMP_WRITE", "path": "user://saves/save.tmp.json", "code": 13, "message": "故障注入：临时档写入失败" }
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] shutdown_app (res://scripts/app/app_controller.gd:588)
+       [1] _process (res://tests/unit/test_app_smoke.gd:70)

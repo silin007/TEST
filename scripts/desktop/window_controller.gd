@@ -17,17 +17,29 @@ const FULL_SIZE := Vector2i(960, 640)
 ## 校验周期：每 2 秒检查显示器/工作区变化（架构 §4.2）
 const VALIDATE_INTERVAL := 2.0
 
+## 拖动判定阈值（像素）：按下后移动超过此距离才算拖动（P0-005）。
+## 低于阈值视为点击，不抑制后续点击，保证双击可用。
+const DRAG_THRESHOLD := 4.0
+
 var _mode: StringName = AppMode.FLOATING
 var _mouse_mode: StringName = AppMode.MOUSE_INTERACTIVE
 ## 恢复入口就绪状态（架构 §4.1）：未就绪时拒绝隐藏与穿透
 var _recovery_ready: bool = false
 var _dragging: bool = false
+## 已按下但尚未越过阈值：此时既不是拖动也不是已确认点击
+var _pressing: bool = false
+## 本次按下是否真正越过了阈值（只有为 true 才允许上层抑制点击，P0-005）
+var _drag_committed: bool = false
+var _press_origin: Vector2 = Vector2.ZERO
 var _drag_offset: Vector2 = Vector2.ZERO
 var _floating_rect: Rect2i = Rect2i(100, 100, FLOATING_SIZE.x, FLOATING_SIZE.y)
 var _full_rect: Rect2i = Rect2i(100, 100, FULL_SIZE.x, FULL_SIZE.y)
 var _screen_hint: int = 0
 var _validate_timer: float = 0.0
 var _can_walk: bool = true
+## 当前模式是否接受焦点（策略 allow_focus，架构 §4）。
+## FLOATING/FOCUS/HIDDEN 不抢焦点，避免宠物窗在用户打字时把输入焦点夺走。
+var _allow_focus: bool = false
 
 
 func _ready() -> void:
@@ -68,14 +80,18 @@ func apply_mode(mode: StringName, policy: Dictionary) -> Error:
 	if (mode == AppMode.HIDDEN or mode == AppMode.FOCUS) and not _recovery_ready:
 		push_error("WindowController: 恢复入口未就绪，拒绝进入 %s" % mode)
 		return ERR_UNAVAILABLE
-	# 模式切换前取消拖动，避免遗留按下状态（WIN-03）
-	if _dragging:
-		_end_drag("mode_switch")
+	# 模式切换前取消按下与拖动状态，避免遗留（WIN-03）。
+	# 注意：这里不发 drag_ended，因为模式切换自身会触发保存，且不应抑制紧接着的点击。
+	_pressing = false
+	_dragging = false
+	_drag_committed = false
 	_mode = mode
 	var err := _apply_native_attributes()
 	var mouse_mode: StringName = policy.get("mouse_mode", AppMode.MOUSE_INTERACTIVE) as StringName
 	err = set_mouse_mode_internal(mouse_mode) if err == OK else err
 	_can_walk = bool(policy.get("can_walk", true))
+	_allow_focus = bool(policy.get("allow_focus", false))
+	_apply_focus_policy()
 	validate_geometry()
 	mode_applied.emit(mode, _mouse_mode, err)
 	return err
@@ -106,6 +122,24 @@ func set_mouse_mode_internal(mouse_mode: StringName) -> Error:
 			win.mouse_passthrough = false
 			win.mouse_passthrough_polygon = PackedVector2Array()
 	return OK
+
+
+## 焦点策略（架构 §4）：allow_focus=false 时窗口不抢占焦点。
+## 用 Window.flag NO_FOCUS 表达：FLOATING 宠物窗点击互动不应夺走用户在其它程序的输入焦点。
+func _apply_focus_policy() -> void:
+	var win := get_window()
+	if win == null:
+		return
+	# 仅在创建后设置；运行中反复切换 flag 会引发窗口重建，故用 no_focus 单一方向：
+	# 需要焦点时清 flag，不需要时置 flag，两者都是属性赋值而非重建。
+	if _allow_focus:
+		win.unfocusable = false
+	else:
+		win.unfocusable = true
+
+
+func is_focus_allowed() -> bool:
+	return _allow_focus
 
 
 func _apply_native_attributes() -> Error:
@@ -147,6 +181,11 @@ func is_dragging() -> bool:
 	return _dragging
 
 
+## 本次按下是否真正产生了拖动（P0-005：只有 true 才允许抑制点击）
+func did_drag_occur() -> bool:
+	return _drag_committed
+
+
 func _input(event: InputEvent) -> void:
 	if _mode != AppMode.FLOATING and _mode != AppMode.FOCUS:
 		return
@@ -156,32 +195,52 @@ func _input(event: InputEvent) -> void:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
-				_begin_drag()
-			elif _dragging:
-				_end_drag("released")
-	elif event is InputEventMouseMotion and _dragging:
-		var mm := event as InputEventMouseMotion
-		var win := get_window()
-		if win != null:
-			win.position = Vector2i(Vector2(win.position) + mm.relative)
+				_begin_press(mb.global_position)
+			elif _pressing or _dragging:
+				_end_press()
+	elif event is InputEventMouseMotion and (_pressing or _dragging):
+		_update_drag((event as InputEventMouseMotion).global_position)
 
 
-func _begin_drag() -> void:
-	if _dragging:
+## 按下：只记录起点，不立即进入拖动状态，也不抑制点击
+func _begin_press(global_pos: Vector2) -> void:
+	if _pressing or _dragging:
 		return
-	_dragging = true
-	drag_started.emit()
+	_pressing = true
+	_drag_committed = false
+	_press_origin = global_pos
+	var win := get_window()
+	if win != null:
+		_drag_offset = global_pos - Vector2(win.position)
 
 
-func _end_drag(reason: String) -> void:
+## 移动：仅当越过阈值才真正开始拖动
+func _update_drag(global_pos: Vector2) -> void:
 	if not _dragging:
-		return
+		if not _pressing:
+			return
+		if global_pos.distance_to(_press_origin) < DRAG_THRESHOLD:
+			return
+		_pressing = false
+		_dragging = true
+		_drag_committed = true
+		drag_started.emit()
+	var win := get_window()
+	if win != null:
+		win.position = Vector2i(global_pos - _drag_offset)
+
+
+## 释放：只有真正拖动过才算拖动结束（触发保存），否则什么也不做
+func _end_press() -> void:
+	var was_dragging: bool = _dragging
+	_pressing = false
 	_dragging = false
+	if not was_dragging:
+		_drag_committed = false
+		return
 	_sync_rect_from_window()
 	validate_geometry()
 	drag_ended.emit()
-	if reason != "":
-		push_warning("WindowController: 拖动结束（%s）" % reason)
 
 
 func _sync_rect_from_window() -> void:

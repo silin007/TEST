@@ -1,0 +1,7 @@
+WIN-02 evidence limitation: actual click injection into the underlying app was blocked by the computer-use target check.
+Native runtime observer reported mode=FOCUS, mouse_passthrough=true.
+Attempt 1: point (3286, 128) is over MOTE_P0_Observed.exe "MOTE (DEBUG)", not target window Notepad.exe "input-target.txt - Notepad".
+Recovery: activated Notepad and refreshed screenshot, then retried once.
+Attempt 2: same non-target-window result.
+No click was force-injected past the target check. This is not proof that the underlying app received or did not receive a physical click.
+Verdict: blocked for cross-process click delivery evidence; cannot mark WIN-02 passed.

@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-18",
+  "base_commit": "cfc09f537664fee2404673ee6863de3294d55ba8",
+  "engine": "4.7.2.stable.official.ed1daf0bf",
+  "windows": {
+    "Caption": "Microsoft Windows 11 家庭版 中文版",
+    "Version": "10.0.26200",
+    "BuildNumber": "26200"
+  },
+  "gpus": [
+    {
+      "Name": "NVIDIA GeForce RTX 4070 Laptop GPU",
+      "DriverVersion": "32.0.16.1664"
+    },
+    {
+      "Name": "Intel(R) UHD Graphics",
+      "DriverVersion": "32.0.101.6556"
+    }
+  ],
+  "templates_sha256": "F298490B8D44D934BE425A5A65A51BF15F422428B229A06A6E11D9FFEA248011",
+  "builds": [
+    {
+      "Path": "C:\\Users\\lynn_\\Documents\\Codex\\2026-10-18\\architecture-md-p0-acceptance-md-x20\\work\\p0-audit\\build\\MOTE_P0_Audit.exe",
+      "Hash": "2CD90BD49D78B5A169C13C48622BCDF82E48B739852AFA89A298061CE51FEE3F"
+    },
+    {
+      "Path": "C:\\Users\\lynn_\\Documents\\Codex\\2026-10-18\\architecture-md-p0-acceptance-md-x20\\work\\p0-audit\\build\\MOTE_P0_Observed.exe",
+      "Hash": "7F9CD461DD2FC80E674DBF2C1B500BB3186F7A76437633EF55F71AD572A84007"
+    }
+  ],
+  "source_project_sha256": "B33218541EFB5DDA887091FC2E56C3BD737457288418A91F18741B5BD3B722F5"
+}

@@ -1,0 +1,62 @@
+extends Node
+## 只读验收探针：不修改模式、输入、时间或宠物状态。
+var _timer: float = 0.0
+var _elapsed: float = 0.0
+var _frames: int = 0
+var _corner_alpha: float = -1.0
+
+func _ready() -> void:
+	get_window().close_requested.connect(func() -> void: _record("close_requested"))
+	_record("startup")
+	_sample_render.call_deferred()
+
+func _sample_render() -> void:
+	await RenderingServer.frame_post_draw
+	var capture: Image = get_viewport().get_texture().get_image()
+	if capture != null and not capture.is_empty():
+		_corner_alpha = capture.get_pixel(0, 0).a
+	_record("render_sample")
+
+func _process(delta: float) -> void:
+	_timer += delta
+	_elapsed += delta
+	_frames += 1
+	if _timer >= 5.0:
+		_timer = 0.0
+		_record("periodic")
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var click: InputEventMouseButton = event as InputEventMouseButton
+		var file := FileAccess.open("user://audit_inputs.jsonl", FileAccess.READ_WRITE)
+		if file == null:
+			file = FileAccess.open("user://audit_inputs.jsonl", FileAccess.WRITE)
+		if file != null:
+			file.seek_end()
+			file.store_line(JSON.stringify({"msec":Time.get_ticks_msec(), "position":str(click.position), "pressed":click.pressed, "button":click.button_index, "double_click":click.double_click}))
+
+func _record(reason: String) -> void:
+	var app: AppController = get_parent() as AppController
+	var window: Window = get_window()
+	var screens: Array[Dictionary] = []
+	for i: int in range(DisplayServer.get_screen_count()):
+		screens.append({"index":i, "position":str(DisplayServer.screen_get_position(i)), "size":str(DisplayServer.screen_get_size(i)), "usable_rect":str(DisplayServer.screen_get_usable_rect(i)), "dpi":DisplayServer.screen_get_dpi(i)})
+	var payload: Dictionary = {
+		"reason":reason, "utc":Time.get_datetime_string_from_system(true),
+		"elapsed_seconds":_elapsed, "render_frames":_frames,
+		"user_data_dir":OS.get_user_data_dir(), "engine":Engine.get_version_info(),
+		"window_position":str(window.position), "window_size":str(window.size),
+		"visible":window.visible, "transparent":window.transparent,
+		"transparent_bg":window.transparent_bg, "unfocusable":window.unfocusable,
+		"always_on_top":window.always_on_top, "mouse_passthrough":window.mouse_passthrough,
+		"transparency_allowed":ProjectSettings.get_setting("display/window/per_pixel_transparency/allowed",false),
+		"transparency_available":DisplayServer.is_window_transparency_available(),
+		"corner_alpha":_corner_alpha, "screens":screens,
+		"diagnostics":app.get_diagnostics()
+	}
+	var file := FileAccess.open("user://audit_runtime.jsonl",FileAccess.READ_WRITE)
+	if file == null:
+		file = FileAccess.open("user://audit_runtime.jsonl",FileAccess.WRITE)
+	if file != null:
+		file.seek_end()
+		file.store_line(JSON.stringify(payload))

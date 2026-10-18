@@ -2,6 +2,16 @@
 
 > 配套设计文档：[docs/architecture.md](docs/architecture.md) · [docs/p0_acceptance.md](docs/p0_acceptance.md)
 
+## 最新 P0 验收结论（2026-10-18）
+
+**本轮报告的 5 个阻塞缺陷已修复，自动化测试 221 条全绿。** 独立验收（[完整报告](tests/manual/results/2026-10-18-cfc09f5-codex/report.md)）曾判定「未通过，暂不进入 P1」，指出正常帧率下模拟不推进、旧动作完成事件误奖励、未知版本存档被自动覆盖、导出后黑底、快速双击不打开完整窗口。五个缺陷的修复与回归断言见 [实施记录 §3.1](docs/p0_执行记录_草案_2026-10-18.md)。
+
+**仍需实机证据的项**（不可用自动化替代）：WIN-01/02/05/06/07、PLAT-01～03、SAVE-02/05/08、FOCUS-01、STAB-01、LOG-01 —— 须在**导出的 Windows 独立构建**上执行。
+
+`tests/unit/test_p0_acceptance_audit.gd`（纯模拟、无存档写入）与 `test_p0_acceptance_integration.gd`（独立用户目录保护）作为验收留档保留。集成套件必须在专用 `MOTE_P0_AUDIT_INTEGRATION_...` 配置中运行，正常用户配置下会拒绝执行。
+
+**测试隔离（已解决）：** `test_save.gd`、`test_app_smoke.gd` 三套涉及文件的测试现在在 `_initialize()` 首行调用 `SaveService.use_sandbox(...)`，存档与日志全部重定向到 `user://test_sandbox/<suite>/`。跑测试**不会再触碰**真实 `user://saves/`，可放心直接执行。
+
 ## 这是什么
 
 MOTE 是一个运行在 Windows 桌面上的透明悬浮桌宠（测试角色），P0 验证四件事：**桌面窗口外壳**（透明/无边框/置顶/整窗穿透/恢复）、**骨骼动画**（idle/walk/happy/rest）、**最小生命模拟**（固定步进 + 需求 + UtilityAI）、**可靠本地存档**（JSON + 备份 + 异常恢复）。基础功能完全离线可用；云 AI、账号、同步、订阅、手机/网页端均不在 P0 范围。
@@ -55,10 +65,11 @@ tests\run_tests.bat
 
 | 套件 | 覆盖 | 断言数 |
 |---|---|---|
-| `test_simulation.gd` | SIM-01～04、PET-03①②③、PET-04①③（含架构 §5.2 精确数值） | 24 |
+| `test_simulation.gd` | SIM-01～04、PET-03①②③、PET-04①③；含 **P0-002 跨帧累加器**（60/75/144 FPS × 60s）与 **P0-003 陈旧事件拒奖**回归 | 38 |
 | `test_animation.gd` | PET-01 真实 Skeleton2D/Bone2D 运动、PET-02 映射与失败返回 | 25 |
-| `test_save.gd` | SAVE-01/03/04/05/06/07（往返、损坏恢复、五个提交阶段故障注入） | 99 |
-| `test_app_smoke.gd` | 主场景装配、启动模式、受控时钟、保存链路、退出事务 | 14 |
+| `test_save.gd` | SAVE-01/03/04/05/06/07；含 **P0-001 写入锁**（未知版本在自动保存链路中存活）与显式新建事务回归 | 128 |
+| `test_app_smoke.gd` | 主场景装配、启动模式、受控时钟、保存链路、退出事务；含 **P0-005 单击/双击/拖动互斥**回归 | 30 |
+| **合计** | | **221** |
 
 新增/修改脚本后若报 “Identifier/class not found”，先刷新类缓存：
 
@@ -68,9 +79,14 @@ tests\run_tests.bat
 
 > **关于输出里的 ERROR/WARNING**：`test_save` 的损坏档与故障注入用例会**故意**写入非法内容，
 > 因此会出现 `ERROR: Parse JSON failed`（现已降到最少）与 `push_warning` 栈回溯；
-> 测试脚本会在对应用例前打印 `[注] …属预期`。判定成败只看两点：
+> 测试脚本会在对应用例前打印 `[注] …属预期`。判断脚本本轮执行结果可查看：
 > 每个套件的 `ALL … TESTS PASSED`，以及 `run_tests.bat` 的退出码（0 通过 / 1 失败）。
 > `No Bone2D children of node …` 是 Godot 对叶子骨骼的固有告警，非错误。
+> 上述输出只能说明已有断言是否通过；P0 是否通过仍取决于覆盖范围、补充验收和实机证据，见最新报告。
+
+> **测试沙箱**：`test_save.gd` 与 `test_app_smoke.gd` 在 `_initialize()` 首行调用
+> `SaveService.use_sandbox("user://test_sandbox/<suite>")`，存档与日志写入独立沙箱，
+> `clear_all_for_test()` 只清沙箱。真实 `user://saves/` 不会被读写。
 
 ### 环境探针（ENV 证据，非测试）
 
@@ -92,16 +108,16 @@ tests\run_tests.bat
 | 阶段 | 内容 | 状态 |
 |---|---|---|
 | 1 | 工程骨架、版本锁定、Git 初始化 | 已完成 |
-| 2 | 核心纯逻辑：PetState / PetSimulation / UtilityAI / ActionExecutor | 已完成（24 断言全绿） |
-| 3 | WindowController / FocusController / AppController / RecoveryEntry（窗口、穿透、恢复） | 已完成（装配冒烟通过；桌面能力待实机） |
+| 2 | 核心纯逻辑：PetState / PetSimulation / UtilityAI / ActionExecutor | 已完成（P0-002 时钟、P0-003 实例事件已修复，38 断言全绿） |
+| 3 | WindowController / FocusController / AppController / RecoveryEntry（窗口、穿透、恢复） | 代码已完成（P0-004 透明、P0-005 双击已修复；穿透/恢复/双屏仍待导出构建实机验证） |
 | 4 | 骨骼测试角色与四种动画 | 已完成（25 断言全绿） |
-| 5 | SaveService JSON 安全存档 | 已完成（99 断言全绿） |
-| 6 | 隔离测试与运行文档闭环 | 进行中（自动部分已闭环，手动/实机未执行） |
+| 5 | SaveService JSON 安全存档 | 已完成（P0-001 写入锁已修复，128 断言全绿） |
+| 6 | 隔离测试与运行文档闭环 | 已完成（三套文件类测试沙箱化，221 断言全绿） |
 
-验收标准与完成门槛见 `docs/p0_acceptance.md` §7；所有 P0 用例目前均为「未执行」，完成一项在测试记录中登记一项，不得以「代码写好了」代替实机证据。
+验收标准与完成门槛见 `docs/p0_acceptance.md` §7；最新 31 项执行状态以独立验收报告为准，不得以「代码写好了」或单元测试通过代替完整用例与实机证据。
 
-**已自动化验证**（可重复执行）：SIM-01/02/03/04、PET-01/02、PET-03①②③、PET-04①③、SAVE-01/03/04/05/06/07 的自动部分、装配与退出事务。
-**仍须实机/导出构建验证**（不能凭代码宣称通过）：WIN-01～07（透明、跨应用穿透、托盘/恢复入口、双屏、退出）、PET-04④、SAVE-02/05 的进程中止部分、FOCUS-01、PLAT-01～03、STAB-01、LOG-01。
+**自动化已覆盖**：SIM-01/02/03/04、PET-01/02、PET-03①②③、PET-04①③、SAVE-01/03/04/05/06/07 的自动部分、装配与退出事务，以及 5 个阻塞缺陷的专项回归。
+**仍须实机/导出构建验证**（不能凭代码宣称通过）：WIN-01/02/05/06/07（透明、跨应用穿透、托盘/恢复入口、双击观感）、PET-04④、SAVE-02/05 的进程中止部分、SAVE-08、FOCUS-01、PLAT-01～03、STAB-01、LOG-01。
 
 ## 目录结构
 
@@ -142,6 +158,7 @@ git push
   - `Animation` 无 `TYPE_ROTATION`（已改名 `TYPE_ROTATION_3D`，仅 Node3D）；2D 骨骼旋转用 `TYPE_VALUE` + `":rotation"` 属性轨道。动画须加入 `AnimationLibrary`（`AnimationPlayer.add_animation()` 已移除）。
   - `Bone2D.rest` 默认全零（det=0），不显式设置会在骨架求逆时报错；本工程已在 `scenes/pet/pet.tscn` 为每根骨骼设置 rest。
 - 恢复入口采用「原生托盘优先 → 失败则建立独立常驻小窗口」的双层策略；即使托盘不可用也不退化为仅窗口内按钮（架构 §4.1）。
+- `Window.unfocusable` 存在（探针确认），用于实现 `allow_focus` 策略：FLOATING/FOCUS/HIDDEN 不夺焦点，FULL 接受焦点。
 
 ## 诊断入口（架构 §8）
 

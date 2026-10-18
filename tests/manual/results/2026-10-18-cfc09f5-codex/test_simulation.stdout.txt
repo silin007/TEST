@@ -1,0 +1,36 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+SIM-01: 固定 idle 600 tick
+  [PASS] tick 数 == 600（实际 600）
+  [PASS] 模拟时间 60s（实际 60.000000）
+  [PASS] energy=79.4（实际 79.400000）
+  [PASS] hunger=20.3（实际 20.300000）
+  [PASS] comfort=79.88（实际 79.880000）
+  [PASS] social_need=20.3（实际 20.300000）
+SIM-01: 固定 rest 600 tick
+  [PASS] rest energy=86（实际 86.000000）
+  [PASS] rest hunger=20.3（实际 20.300000）
+SIM-02: FPS 等价性
+  [PASS] 15FPS vs 30FPS energy 接近（80.000000 vs 80.000000）
+  [PASS] 30FPS vs 60FPS energy 接近（80.000000 vs 80.000000）
+PET-03①: 低精力进入休息
+  [PASS] 低精力时开始 rest
+  [PASS] rest 后 energy 恢复（实际 22.879000）
+PET-03②: activity=1 → walk
+  [PASS] 首个决策选 walk（实际 walk）
+PET-03③: curiosity=1 → look_around
+  [PASS] 首个决策选 look_around（实际 look_around）
+PET-04: happy 奖励只一次
+  [PASS] happy 请求被接受
+  [PASS] comfort=51.996（实际 51.996000）
+  [PASS] social_need=45.01（实际 45.010000）
+  [PASS] 重复事件不重复奖励（comfort=51.996000）
+PET-04: happy 失败无奖励
+  [PASS] 失败无 comfort 奖励（50.000000）
+  [PASS] 失败无 social 奖励（50.000000）
+SIM-03: 时间断点无惩罚
+  [PASS] time_gap 被记录
+  [PASS] 断点不扣需求
+SIM-04: 墙钟回拨无惩罚
+  [PASS] 回拨后 tick 不异常增加（100 == 100）
+ALL SIM/PET TESTS PASSED

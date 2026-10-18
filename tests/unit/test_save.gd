@@ -4,18 +4,19 @@ extends SceneTree
 ## SAVE-07（结构/范围/未知版本）。
 ## 运行：Godot --headless --path . --script res://tests/unit/test_save.gd
 ##
-## 注意：使用真实 user://saves/ 目录（测试夹具，非用户档）。
+## 测试隔离（报告 §4）：入口即把存档重定向到 user://test_sandbox/save/，
+## 本套件会清空目录，绝不允许作用在真实 user://saves/ 上。
 
-const MAIN_FILE := "user://saves/save.json"
-const BAK_FILE := "user://saves/save.bak.json"
-const TMP_FILE := "user://saves/save.tmp.json"
+const MAIN_FILE := "user://test_sandbox/save/saves/save.json"
+const BAK_FILE := "user://test_sandbox/save/saves/save.bak.json"
+const TMP_FILE := "user://test_sandbox/save/saves/save.tmp.json"
 
 var _failures: Array[String] = []
 var _ran: bool = false
 
 
 func _initialize() -> void:
-	pass
+	SaveService.use_sandbox("user://test_sandbox/save")
 
 
 func _process(_delta: float) -> bool:
@@ -54,6 +55,8 @@ func _run_all() -> void:
 	test_unsupported_version_readonly()
 	test_main_corrupt_with_valid_backup()
 	test_all_candidates_corrupt()
+	test_unsupported_version_survives_autosave_chain()
+	test_missing_main_with_candidate_not_first_run()
 	test_fault_injection_stages()
 	test_migrate_dispatch()
 	var svc := SaveService.new()
@@ -180,7 +183,20 @@ func test_unsupported_version_readonly() -> void:
 		"SAVE-07 未知更高 schema 返回 UNSUPPORTED_VERSION，实际=%s" % result["status"])
 	_check(FileAccess.file_exists(MAIN_FILE), "SAVE-07 保留原档")
 	_check(_read(MAIN_FILE) == text, "SAVE-07 不降级写回（字节未变）")
-	_check(svc.save_snapshot(_make_snapshot()) == OK, "SAVE-07 版本拒绝后可显式重建")
+
+	# P0-001 回归：未知更高版本必须锁死隐式写入，否则会被默认 v1 静默覆盖
+	_check(svc.is_write_locked(), "SAVE-07 未知版本后写入被锁定")
+	var implicit_err: Error = svc.save_snapshot(_make_snapshot())
+	_check(implicit_err != OK, "SAVE-07 未知版本后隐式覆盖被拒绝")
+	_check(_read(MAIN_FILE) == text, "SAVE-07 被拒绝后原档字节仍未变")
+
+	# 只有"显式新建事务"（隔离旧档）才允许重建
+	var rebuilt: Dictionary = svc.start_new_save(_make_snapshot())
+	_check(bool(rebuilt.get("ok", false)), "SAVE-07 版本拒绝后可显式重建（隔离旧档后新建）")
+	_check(not svc.is_write_locked(), "SAVE-07 显式新建后解除写入锁")
+	_check(svc.get_revision() == 1, "SAVE-07 重建后 revision 从 1 开始，实际=%d" % svc.get_revision())
+	_check((rebuilt.get("quarantined", []) as Array).size() >= 1, "SAVE-07 重建前已隔离未知版本原档")
+	_check(_read(MAIN_FILE) != text, "SAVE-07 重建后主档已换成新内容")
 
 
 ## —— SAVE-03：主档损坏 + 有效备份 ——
@@ -256,6 +272,60 @@ func test_all_candidates_corrupt() -> void:
 
 
 ## —— SAVE-05 / SAVE-06：各阶段故障注入 ——
+
+## P0-001 回归：启动 + 防抖/周期自动保存的完整链路中，未知版本存档的字节必须保持不变。
+## 缺陷原状：load 返回 UNSUPPORTED_VERSION 后自动保存照常运行，
+## 一次 60 秒周期保存就把用户的高版本存档用默认 v1 覆盖 —— 数据丢失级。
+func test_unsupported_version_survives_autosave_chain() -> void:
+	var svc := SaveService.new()
+	svc.clear_all_for_test()
+	var future := _make_snapshot()
+	future["schema_version"] = 999
+	future["revision"] = 500
+	var original := JSON.stringify(future, "\t")
+	_write(MAIN_FILE, original)
+
+	var result: Dictionary = svc.load_snapshot()
+	_check(result["status"] == SaveValidator.STATUS_UNSUPPORTED_VERSION,
+		"P0-001 启动加载识别为 UNSUPPORTED_VERSION")
+
+	# 模拟 AppController：加载失败后仍会调度保存（启动时 _schedule_save 无条件调用）
+	# 这里连续尝试多次，等价于防抖提交 + 多个 60 秒周期保存
+	var attempts: int = 5
+	var all_rejected := true
+	for i: int in range(attempts):
+		if svc.save_snapshot(_make_snapshot()) == OK:
+			all_rejected = false
+	_check(all_rejected, "P0-001 连续 %d 次自动保存全部被拒绝" % attempts)
+	_check(_read(MAIN_FILE) == original, "P0-001 未知版本原档字节未被改动")
+	_check(svc.is_write_locked(), "P0-001 写入锁保持有效")
+	_check(str(svc.get_last_error()["stage"]) == "VALIDATE", "P0-001 错误阶段为 VALIDATE")
+	_check(not svc.get_last_error().is_empty(), "P0-001 记录可诊断的错误信息")
+
+	# 备份文件中不应出现被降级的副本
+	_check(not FileAccess.file_exists(BAK_FILE), "P0-001 未生成降级备份")
+
+	svc.clear_all_for_test()
+
+
+## P0-001：主档缺失但存在候选时，不得当作首次运行而自动建新档
+func test_missing_main_with_candidate_not_first_run() -> void:
+	var svc := SaveService.new()
+	svc.clear_all_for_test()
+	_check(svc.save_snapshot(_make_snapshot()) == OK, "P0-001 夹具：建立主档")
+	_check(svc.save_snapshot(_make_snapshot()) == OK, "P0-001 夹具：建立备份")
+	# 主档被外部删除，只剩备份
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(MAIN_FILE))
+
+	var fresh := SaveService.new()
+	var result: Dictionary = fresh.load_snapshot()
+	_check(result["status"] == SaveValidator.STATUS_RECOVERABLE,
+		"P0-001 主档缺失但有候选 → RECOVERABLE（非 MISSING），实际=%s" % result["status"])
+	_check(fresh.is_write_locked(), "P0-001 该状态下写入被锁定")
+	_check(fresh.save_snapshot(_make_snapshot()) != OK, "P0-001 拒绝把它当首次运行建新档")
+	_check(not FileAccess.file_exists(MAIN_FILE), "P0-001 未静默重建主档")
+	fresh.clear_all_for_test()
+
 
 func test_fault_injection_stages() -> void:
 	_note("逐阶段注入保存故障，ERROR 是注入点被触发的证据")

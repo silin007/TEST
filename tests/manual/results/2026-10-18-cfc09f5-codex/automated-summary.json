@@ -1,0 +1,30 @@
+[
+  {
+    "suite": "test_simulation",
+    "exit_code": 0,
+    "pass_count": 23,
+    "fail_count": 0,
+    "final": "ALL SIM/PET TESTS PASSED"
+  },
+  {
+    "suite": "test_animation",
+    "exit_code": 0,
+    "pass_count": 25,
+    "fail_count": 0,
+    "final": "ALL ANIMATION TESTS PASSED"
+  },
+  {
+    "suite": "test_save",
+    "exit_code": 0,
+    "pass_count": 99,
+    "fail_count": 0,
+    "final": "ALL SAVE TESTS PASSED"
+  },
+  {
+    "suite": "test_app_smoke",
+    "exit_code": 0,
+    "pass_count": 14,
+    "fail_count": 0,
+    "final": "ALL APP SMOKE TESTS PASSED"
+  }
+]

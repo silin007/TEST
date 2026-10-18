@@ -29,23 +29,26 @@ func _ready() -> void:
 	visible = false
 
 
+## 布局（P0-005 附带修复）：FULL 窗口 960×640，诊断文本为多行长句，
+## 原先直接堆在 VBox 里会把按钮行挤出可视区（被裁切）。
+## 现在：标题 + 可滚动的诊断区（占满剩余高度）+ 固定在底部的按钮行与恢复区。
 func _build_ui() -> void:
 	var bg := ColorRect.new()
 	bg.set_anchors_preset(PRESET_FULL_RECT)
 	bg.color = BACKGROUND_COLOR
 	add_child(bg)
 
-	var root_box := VBoxContainer.new()
-	root_box.set_anchors_preset(PRESET_FULL_RECT)
-	root_box.add_theme_constant_override("separation", 8)
 	var margin := MarginContainer.new()
 	margin.set_anchors_preset(PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", 16)
 	margin.add_theme_constant_override("margin_top", 16)
 	margin.add_theme_constant_override("margin_right", 16)
 	margin.add_theme_constant_override("margin_bottom", 16)
-	margin.add_child(root_box)
 	add_child(margin)
+
+	var root_box := VBoxContainer.new()
+	root_box.add_theme_constant_override("separation", 8)
+	margin.add_child(root_box)
 
 	var title := Label.new()
 	title.text = "MOTE（P0 原型）"
@@ -53,13 +56,22 @@ func _build_ui() -> void:
 	title.add_theme_color_override("font_color", TEXT_COLOR)
 	root_box.add_child(title)
 
+	# 诊断区：撑满剩余空间并允许滚动，长文本不再把下方控件顶出窗口
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root_box.add_child(scroll)
+
 	_diagnostics = Label.new()
 	_diagnostics.add_theme_color_override("font_color", TEXT_COLOR)
+	_diagnostics.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_diagnostics.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_diagnostics.text = "诊断信息加载中……"
-	root_box.add_child(_diagnostics)
+	scroll.add_child(_diagnostics)
 
 	var button_row := HBoxContainer.new()
 	button_row.add_theme_constant_override("separation", 8)
+	button_row.size_flags_vertical = Control.SIZE_SHRINK_END
 	for entry: Array in [
 		["返回悬浮", ACTION_BACK_TO_FLOATING],
 		["隐藏宠物", ACTION_HIDE],
@@ -78,8 +90,11 @@ func _build_ui() -> void:
 	_recovery_box = VBoxContainer.new()
 	_recovery_box.add_theme_constant_override("separation", 6)
 	_recovery_box.visible = false
+	_recovery_box.size_flags_vertical = Control.SIZE_SHRINK_END
 	_recovery_label = Label.new()
 	_recovery_label.add_theme_color_override("font_color", Color(1.0, 0.78, 0.36, 1.0))
+	_recovery_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_recovery_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_recovery_label.text = ""
 	_recovery_box.add_child(_recovery_label)
 	_recovery_buttons = VBoxContainer.new()

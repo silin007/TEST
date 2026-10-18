@@ -12,9 +12,9 @@ const PET_SCENE := preload("res://scenes/pet/pet.tscn")
 const AUTOSAVE_INTERVAL := 60.0
 ## 合并防抖：拖动结束/模式或设置改变后 1 秒提交
 const SAVE_DEBOUNCE := 1.0
-## 双击判定窗口（秒）
+## 双击判定交给系统（InputEventMouseButton.double_click），此常量仅保留为诊断记录用。
 const DOUBLE_CLICK_WINDOW := 0.30
-## 拖动结束后抑制点击的时长（秒），避免拖动被误判为点击
+## 拖动结束后抑制点击的时长（秒）：仅当真正拖动过才生效（P0-005）
 const DRAG_CLICK_SUPPRESS := 0.15
 ## 走动速度（像素/秒），仅 FLOATING 且 can_walk 时生效
 const WALK_SPEED := 24.0
@@ -261,6 +261,9 @@ func _process(delta: float) -> void:
 
 ## —— 互动 ——
 
+## 单击 → 互动；双击（系统判定）→ FLOATING 打开 FULL。
+## 拖动抑制：WindowController 只在真正越过阈值拖动后才发 drag_ended，
+## 因此这里只需根据 drag_ended 置一个抑制位，未移动的按下不会污染点击（P0-005）。
 func _on_pet_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if _input_frozen:
 		return
@@ -271,10 +274,14 @@ func _on_pet_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) ->
 		return
 	if _mode != AppMode.FLOATING and _mode != AppMode.FULL:
 		return
+	# 刚结束真实拖动：这一次释放后的输入属于拖动手势，不当作点击
+	if _window_controller != null and _window_controller.did_drag_occur():
+		return
 	var now_sec: float = float(Time.get_ticks_msec()) / 1000.0
 	if now_sec < _suppress_click_until:
-		return  # 拖动刚结束，取消该次点击/双击
-	if _last_click_time > 0.0 and now_sec - _last_click_time <= DOUBLE_CLICK_WINDOW:
+		return
+	# 系统级双击判定：不自行计时，避免与平台双击间隔不一致
+	if mb.double_click:
 		_last_click_time = -1.0
 		if _mode == AppMode.FLOATING:
 			switch_mode(AppMode.FULL)
@@ -541,14 +548,11 @@ func _on_candidate_selected(path: String) -> void:
 		_schedule_save()
 
 
-## 明确新建存档：新建前必须隔离现有文件，隔离失败则拒绝新建（架构 §7.2）
+## 明确新建存档：新建前必须隔离现有文件，隔离失败则拒绝新建（架构 §7.2）。
+## 通过 SaveService.start_new_save 走单一事务：隔离成功才解锁并首次提交，
+## 避免"只解锁没隔离"或"已隔离却仍被写入锁拦住"的半状态（P0-001）。
 func _create_new_save() -> Error:
-	var quarantine: Dictionary = _save.quarantine_all_for_reset()
-	if not bool(quarantine.get("ok", false)):
-		push_error("[MOTE] 隔离失败，拒绝新建：%s" % quarantine.get("error", ""))
-		_save_status = "隔离失败，未新建"
-		return ERR_UNAVAILABLE
-	_save.reset_identity()
+	# 先摆好内存状态，再把快照交给事务做首次提交
 	_state.reset_defaults()
 	_state.pet_id = _make_pet_id()
 	var now: String = SaveValidator.utc_now()
@@ -557,10 +561,14 @@ func _create_new_save() -> Error:
 	_state.last_simulated_at = now
 	_mode = AppMode.FLOATING
 	_mouse_pref = AppMode.MOUSE_INTERACTIVE
-	var err: Error = _save.save_snapshot(_build_snapshot())
-	if err != OK:
-		push_error("[MOTE] 新建存档失败：%s" % _save.get_last_error())
-		return err
+
+	var result: Dictionary = _save.start_new_save(_build_snapshot())
+	if not bool(result.get("ok", false)):
+		var detail: String = str(result.get("error", ""))
+		push_error("[MOTE] 新建存档失败：%s" % detail)
+		_save_status = "新建失败：%s" % detail
+		return result.get("write_error", ERR_UNAVAILABLE) as Error
+
 	_save_status = "已新建 revision %d（原件已隔离）" % _save.get_revision()
 	_load_problem = ""
 	if _panel != null:
@@ -618,7 +626,7 @@ func get_diagnostics() -> Dictionary:
 		"recovery_ready": _recovery.is_ready(),
 		"revision": _save.get_revision(),
 		"save_id": _save.get_save_id(),
-		"save_path": ProjectSettings.globalize_path(SaveService.MAIN_FILE),
+		"save_path": ProjectSettings.globalize_path(SaveService.main_path()),
 		"save_status": _save_status,
 		"load_problem": _load_problem,
 	}
