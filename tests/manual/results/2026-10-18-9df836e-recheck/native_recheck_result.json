@@ -1,0 +1,231 @@
+{
+	"checks": 15,
+	"display_driver": "Windows",
+	"failures": 0,
+	"rows": [
+		{
+			"extra": {},
+			"mode": "FLOATING",
+			"passed": true,
+			"platform": {
+				"can_hide": true,
+				"display_driver": "Windows",
+				"hidden_by_minimize": false,
+				"minimized": false,
+				"window_mode": 0,
+				"window_visible": true
+			},
+			"stage": "origin_FLOATING"
+		},
+		{
+			"extra": {},
+			"mode": "HIDDEN",
+			"passed": true,
+			"platform": {
+				"can_hide": true,
+				"display_driver": "Windows",
+				"hidden_by_minimize": true,
+				"minimized": true,
+				"window_mode": 1,
+				"window_visible": true
+			},
+			"stage": "hidden_from_FLOATING"
+		},
+		{
+			"extra": {
+				"simulation_delta": 1.2,
+				"wall_delta": 1.201
+			},
+			"mode": "HIDDEN",
+			"passed": true,
+			"platform": {
+				"can_hide": true,
+				"display_driver": "Windows",
+				"hidden_by_minimize": true,
+				"minimized": true,
+				"window_mode": 1,
+				"window_visible": true
+			},
+			"stage": "hidden_clock_FLOATING"
+		},
+		{
+			"extra": {},
+			"mode": "FLOATING",
+			"passed": true,
+			"platform": {
+				"can_hide": true,
+				"display_driver": "Windows",
+				"hidden_by_minimize": false,
+				"minimized": false,
+				"window_mode": 0,
+				"window_visible": true
+			},
+			"stage": "show_pet_returns_FLOATING"
+		},
+		{
+			"extra": {},
+			"mode": "FULL",
+			"passed": true,
+			"platform": {
+				"can_hide": true,
+				"display_driver": "Windows",
+				"hidden_by_minimize": false,
+				"minimized": false,
+				"window_mode": 0,
+				"window_visible": true
+			},
+			"stage": "origin_FULL"
+		},
+		{
+			"extra": {},
+			"mode": "HIDDEN",
+			"passed": true,
+			"platform": {
+				"can_hide": true,
+				"display_driver": "Windows",
+				"hidden_by_minimize": true,
+				"minimized": true,
+				"window_mode": 1,
+				"window_visible": true
+			},
+			"stage": "hidden_from_FULL"
+		},
+		{
+			"extra": {
+				"simulation_delta": 1.2,
+				"wall_delta": 1.204
+			},
+			"mode": "HIDDEN",
+			"passed": true,
+			"platform": {
+				"can_hide": true,
+				"display_driver": "Windows",
+				"hidden_by_minimize": true,
+				"minimized": true,
+				"window_mode": 1,
+				"window_visible": true
+			},
+			"stage": "hidden_clock_FULL"
+		},
+		{
+			"extra": {},
+			"mode": "FULL",
+			"passed": true,
+			"platform": {
+				"can_hide": true,
+				"display_driver": "Windows",
+				"hidden_by_minimize": false,
+				"minimized": false,
+				"window_mode": 0,
+				"window_visible": true
+			},
+			"stage": "show_pet_returns_FULL"
+		},
+		{
+			"extra": {},
+			"mode": "FOCUS",
+			"passed": true,
+			"platform": {
+				"can_hide": true,
+				"display_driver": "Windows",
+				"hidden_by_minimize": false,
+				"minimized": false,
+				"window_mode": 0,
+				"window_visible": true
+			},
+			"stage": "origin_FOCUS"
+		},
+		{
+			"extra": {},
+			"mode": "HIDDEN",
+			"passed": true,
+			"platform": {
+				"can_hide": true,
+				"display_driver": "Windows",
+				"hidden_by_minimize": true,
+				"minimized": true,
+				"window_mode": 1,
+				"window_visible": true
+			},
+			"stage": "hidden_from_FOCUS"
+		},
+		{
+			"extra": {
+				"simulation_delta": 1.2,
+				"wall_delta": 1.203
+			},
+			"mode": "HIDDEN",
+			"passed": true,
+			"platform": {
+				"can_hide": true,
+				"display_driver": "Windows",
+				"hidden_by_minimize": true,
+				"minimized": true,
+				"window_mode": 1,
+				"window_visible": true
+			},
+			"stage": "hidden_clock_FOCUS"
+		},
+		{
+			"extra": {},
+			"mode": "FOCUS",
+			"passed": true,
+			"platform": {
+				"can_hide": true,
+				"display_driver": "Windows",
+				"hidden_by_minimize": false,
+				"minimized": false,
+				"window_mode": 0,
+				"window_visible": true
+			},
+			"stage": "show_pet_returns_FOCUS"
+		},
+		{
+			"extra": {},
+			"mode": "FLOATING",
+			"passed": true,
+			"platform": {
+				"can_hide": true,
+				"display_driver": "Windows",
+				"hidden_by_minimize": false,
+				"minimized": false,
+				"window_mode": 0,
+				"window_visible": true
+			},
+			"stage": "restore_interaction"
+		},
+		{
+			"extra": {
+				"panel_size": "(960.0, 640.0)",
+				"window_size": "(960, 640)"
+			},
+			"mode": "FULL",
+			"passed": true,
+			"platform": {
+				"can_hide": true,
+				"display_driver": "Windows",
+				"hidden_by_minimize": false,
+				"minimized": false,
+				"window_mode": 0,
+				"window_visible": true
+			},
+			"stage": "full_panel_covers_window"
+		},
+		{
+			"extra": {
+				"exit_rect": "[P: (384.0, 593.0), S: (40.0, 31.0)]"
+			},
+			"mode": "FULL",
+			"passed": true,
+			"platform": {
+				"can_hide": true,
+				"display_driver": "Windows",
+				"hidden_by_minimize": false,
+				"minimized": false,
+				"window_mode": 0,
+				"window_visible": true
+			},
+			"stage": "exit_button_visible_and_in_bounds"
+		}
+	]
+}

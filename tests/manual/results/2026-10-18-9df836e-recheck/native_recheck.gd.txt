@@ -1,0 +1,63 @@
+extends Node
+## 实际 Windows 显示驱动上的应用回调集成复验，不代替物理托盘点击。
+var _rows: Array[Dictionary] = []
+var _failures: int = 0
+
+func _ready() -> void:
+	_run.call_deferred()
+
+func _run() -> void:
+	if DisplayServer.get_name() != "Windows":
+		get_tree().quit(2)
+		return
+	var app: AppController = get_parent() as AppController
+	var controller: WindowController = app.get_node("WindowController") as WindowController
+	await get_tree().create_timer(1.0).timeout
+	for origin: StringName in [AppMode.FLOATING,AppMode.FULL,AppMode.FOCUS]:
+		var origin_error: Error = app.switch_mode(origin)
+		await get_tree().create_timer(0.3).timeout
+		_record(app,controller,"origin_"+str(origin),origin_error == OK and not bool(controller.get_platform_state()["minimized"]))
+		var hide_error: Error = app.switch_mode(AppMode.HIDDEN)
+		await get_tree().create_timer(0.3).timeout
+		_record(app,controller,"hidden_from_"+str(origin),hide_error == OK and app.get_mode() == AppMode.HIDDEN and bool(controller.get_platform_state()["minimized"]))
+		var before_seconds: float = float(app.get_diagnostics()["simulation_elapsed_seconds"])
+		var before_msec: int = Time.get_ticks_msec()
+		await get_tree().create_timer(1.2).timeout
+		var wall_delta: float = float(Time.get_ticks_msec()-before_msec)/1000.0
+		var simulation_delta: float = float(app.get_diagnostics()["simulation_elapsed_seconds"])-before_seconds
+		_record(app,controller,"hidden_clock_"+str(origin),simulation_delta > 0.0 and absf(simulation_delta-wall_delta) <= 0.2,{"wall_delta":wall_delta,"simulation_delta":simulation_delta})
+		app._on_recovery_action(RecoveryEntry.ACTION_SHOW_PET)
+		await get_tree().create_timer(0.3).timeout
+		_record(app,controller,"show_pet_returns_"+str(origin),app.get_mode() == origin and not bool(controller.get_platform_state()["minimized"]))
+	app._on_recovery_action(RecoveryEntry.ACTION_RESTORE_INTERACT)
+	await get_tree().create_timer(0.3).timeout
+	_record(app,controller,"restore_interaction",app.get_mode() == AppMode.FLOATING and app.get_mouse_mode() == AppMode.MOUSE_INTERACTIVE and not bool(controller.get_platform_state()["minimized"]))
+	app._on_recovery_action(RecoveryEntry.ACTION_OPEN_FULL)
+	await get_tree().create_timer(0.3).timeout
+	var panel: Control = app.get_node("FullPanel") as Control
+	_record(app,controller,"full_panel_covers_window",panel.size == Vector2(get_window().size),{"panel_size":str(panel.size),"window_size":str(get_window().size)})
+	var exit_buttons: Array[Button] = []
+	for child: Node in _walk(panel):
+		if child is Button and (child as Button).text == "退出":
+			exit_buttons.append(child as Button)
+	var exit_in_bounds: bool = exit_buttons.size() == 1 and exit_buttons[0].is_visible_in_tree() and Rect2(Vector2.ZERO,panel.size).encloses(exit_buttons[0].get_global_rect())
+	_record(app,controller,"exit_button_visible_and_in_bounds",exit_in_bounds,{"exit_rect":str(exit_buttons[0].get_global_rect()) if not exit_buttons.is_empty() else "missing"})
+	var file := FileAccess.open("user://native_recheck_result.json",FileAccess.WRITE)
+	file.store_string(JSON.stringify({"checks":_rows.size(),"failures":_failures,"display_driver":DisplayServer.get_name(),"rows":_rows},"\t"))
+	file.close()
+	print("NATIVE RECHECK RESULT: checks=%d failures=%d" % [_rows.size(),_failures])
+	get_tree().quit(0 if _failures == 0 else 1)
+
+func _record(app: AppController,controller: WindowController,stage: String,passed: bool,extra: Dictionary={}) -> void:
+	var row: Dictionary={"stage":stage,"passed":passed,"mode":str(app.get_mode()),"platform":controller.get_platform_state(),"extra":extra}
+	_rows.append(row)
+	if not passed:
+		_failures += 1
+	print(("PASS " if passed else "FAIL ")+JSON.stringify(row))
+
+func _walk(node: Node) -> Array[Node]:
+	var result: Array[Node]=[]
+	for child: Node in node.get_children():
+		result.append(child)
+		result.append_array(_walk(child))
+	return result

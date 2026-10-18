@@ -1,0 +1,50 @@
+[
+  {
+    "suite": "test_simulation",
+    "exit_code": 0,
+    "pass_count": 47,
+    "fail_count": 0,
+    "script_errors": 0,
+    "bone_warnings": 0
+  },
+  {
+    "suite": "test_animation",
+    "exit_code": 0,
+    "pass_count": 25,
+    "fail_count": 0,
+    "script_errors": 0,
+    "bone_warnings": 0
+  },
+  {
+    "suite": "test_save",
+    "exit_code": 0,
+    "pass_count": 119,
+    "fail_count": 0,
+    "script_errors": 0,
+    "bone_warnings": 0
+  },
+  {
+    "suite": "test_app_smoke",
+    "exit_code": 0,
+    "pass_count": 39,
+    "fail_count": 0,
+    "script_errors": 0,
+    "bone_warnings": 0
+  },
+  {
+    "suite": "test_p0_acceptance_audit",
+    "exit_code": 0,
+    "pass_count": 14,
+    "fail_count": 0,
+    "script_errors": 0,
+    "bone_warnings": 0
+  },
+  {
+    "suite": "test_p0_acceptance_integration",
+    "exit_code": 0,
+    "pass_count": 2,
+    "fail_count": 0,
+    "script_errors": 0,
+    "bone_warnings": 0
+  }
+]

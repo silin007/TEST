@@ -1,0 +1,21 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+D3D12 12_0 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce RTX 4070 Laptop GPU
+
+[MOTE] action_started look_around #1
+PASS {"extra":{},"mode":"FLOATING","passed":true,"platform":{"can_hide":true,"display_driver":"Windows","hidden_by_minimize":false,"minimized":false,"window_mode":0,"window_visible":true},"stage":"origin_FLOATING"}
+PASS {"extra":{},"mode":"HIDDEN","passed":true,"platform":{"can_hide":true,"display_driver":"Windows","hidden_by_minimize":true,"minimized":true,"window_mode":1,"window_visible":true},"stage":"hidden_from_FLOATING"}
+PASS {"extra":{"simulation_delta":1.2,"wall_delta":1.201},"mode":"HIDDEN","passed":true,"platform":{"can_hide":true,"display_driver":"Windows","hidden_by_minimize":true,"minimized":true,"window_mode":1,"window_visible":true},"stage":"hidden_clock_FLOATING"}
+PASS {"extra":{},"mode":"FLOATING","passed":true,"platform":{"can_hide":true,"display_driver":"Windows","hidden_by_minimize":false,"minimized":false,"window_mode":0,"window_visible":true},"stage":"show_pet_returns_FLOATING"}
+PASS {"extra":{},"mode":"FULL","passed":true,"platform":{"can_hide":true,"display_driver":"Windows","hidden_by_minimize":false,"minimized":false,"window_mode":0,"window_visible":true},"stage":"origin_FULL"}
+PASS {"extra":{},"mode":"HIDDEN","passed":true,"platform":{"can_hide":true,"display_driver":"Windows","hidden_by_minimize":true,"minimized":true,"window_mode":1,"window_visible":true},"stage":"hidden_from_FULL"}
+PASS {"extra":{"simulation_delta":1.2,"wall_delta":1.204},"mode":"HIDDEN","passed":true,"platform":{"can_hide":true,"display_driver":"Windows","hidden_by_minimize":true,"minimized":true,"window_mode":1,"window_visible":true},"stage":"hidden_clock_FULL"}
+[MOTE] action_finished look_around #1 success=true reason=
+PASS {"extra":{},"mode":"FULL","passed":true,"platform":{"can_hide":true,"display_driver":"Windows","hidden_by_minimize":false,"minimized":false,"window_mode":0,"window_visible":true},"stage":"show_pet_returns_FULL"}
+PASS {"extra":{},"mode":"FOCUS","passed":true,"platform":{"can_hide":true,"display_driver":"Windows","hidden_by_minimize":false,"minimized":false,"window_mode":0,"window_visible":true},"stage":"origin_FOCUS"}
+PASS {"extra":{},"mode":"HIDDEN","passed":true,"platform":{"can_hide":true,"display_driver":"Windows","hidden_by_minimize":true,"minimized":true,"window_mode":1,"window_visible":true},"stage":"hidden_from_FOCUS"}
+PASS {"extra":{"simulation_delta":1.2,"wall_delta":1.203},"mode":"HIDDEN","passed":true,"platform":{"can_hide":true,"display_driver":"Windows","hidden_by_minimize":true,"minimized":true,"window_mode":1,"window_visible":true},"stage":"hidden_clock_FOCUS"}
+PASS {"extra":{},"mode":"FOCUS","passed":true,"platform":{"can_hide":true,"display_driver":"Windows","hidden_by_minimize":false,"minimized":false,"window_mode":0,"window_visible":true},"stage":"show_pet_returns_FOCUS"}
+PASS {"extra":{},"mode":"FLOATING","passed":true,"platform":{"can_hide":true,"display_driver":"Windows","hidden_by_minimize":false,"minimized":false,"window_mode":0,"window_visible":true},"stage":"restore_interaction"}
+PASS {"extra":{"panel_size":"(960.0, 640.0)","window_size":"(960, 640)"},"mode":"FULL","passed":true,"platform":{"can_hide":true,"display_driver":"Windows","hidden_by_minimize":false,"minimized":false,"window_mode":0,"window_visible":true},"stage":"full_panel_covers_window"}
+PASS {"extra":{"exit_rect":"[P: (384.0, 593.0), S: (40.0, 31.0)]"},"mode":"FULL","passed":true,"platform":{"can_hide":true,"display_driver":"Windows","hidden_by_minimize":false,"minimized":false,"window_mode":0,"window_visible":true},"stage":"exit_button_visible_and_in_bounds"}
+NATIVE RECHECK RESULT: checks=15 failures=0

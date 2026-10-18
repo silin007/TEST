@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-18",
+  "project": "I:\\TEMP\\godot-temp",
+  "base_commit": "9df836e94520d80b37f4e512ca6102604c037bba",
+  "engine": "4.7.2.stable.official.ed1daf0bf",
+  "windows": {
+    "Caption": "Microsoft Windows 11 家庭版 中文版",
+    "Version": "10.0.26200",
+    "BuildNumber": "26200"
+  },
+  "gpus": [
+    {
+      "Name": "NVIDIA GeForce RTX 4070 Laptop GPU",
+      "DriverVersion": "32.0.16.1664"
+    },
+    {
+      "Name": "Intel(R) UHD Graphics",
+      "DriverVersion": "32.0.101.6556"
+    }
+  ],
+  "product_files_unchanged": true,
+  "binary": {
+    "Path": "C:\\Users\\lynn_\\Documents\\Codex\\2026-10-18\\architecture-md-p0-acceptance-md-x20\\work\\p0-recheck-9df836e\\build\\MOTE_P0_NativeRecheck_9df.exe",
+    "Hash": "76D2AD1790980ABE3BCF7D1F2E83D23126C0AB5F4D5E09196F0F20AF792FCD2A"
+  }
+}

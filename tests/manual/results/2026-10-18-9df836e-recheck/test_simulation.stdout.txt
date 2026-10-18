@@ -1,0 +1,65 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+SIM-01: 固定 idle 600 tick
+  [PASS] tick 数 == 600（实际 600）
+  [PASS] 模拟时间 60s（实际 60.000000）
+  [PASS] energy=79.4（实际 79.400000）
+  [PASS] hunger=20.3（实际 20.300000）
+  [PASS] comfort=79.88（实际 79.880000）
+  [PASS] social_need=20.3（实际 20.300000）
+SIM-01: 固定 rest 600 tick
+  [PASS] rest energy=86（实际 86.000000）
+  [PASS] rest hunger=20.3（实际 20.300000）
+SIM-02: FPS 等价性
+  [PASS] 15FPS vs 30FPS energy 接近（79.401000 vs 79.400000）
+  [PASS] 30FPS vs 60FPS energy 接近（79.400000 vs 79.400000）
+SIM-02 回归(P0-002): 帧率余数不丢失
+  [PASS] 60FPS/60s tick ≈600（实际 599）
+  [PASS] 60FPS/60s elapsed ≈60s（实际 59.900000）
+  [PASS] 60FPS/60s needs 确实推进（energy=79.401000 < 99）
+  [PASS] 60FPS 余数 < SIM_DT（实际 0.100000）
+  [PASS] 75FPS/60s tick ≈600（实际 600）
+  [PASS] 75FPS/60s elapsed ≈60s（实际 60.000000）
+  [PASS] 75FPS/60s needs 确实推进（energy=79.400000 < 99）
+  [PASS] 75FPS 余数 < SIM_DT（实际 0.000000）
+  [PASS] 144FPS/60s tick ≈600（实际 600）
+  [PASS] 144FPS/60s elapsed ≈60s（实际 60.000000）
+  [PASS] 144FPS/60s needs 确实推进（energy=79.400000 < 99）
+  [PASS] 144FPS 余数 < SIM_DT（实际 0.000000）
+PET-03①: 低精力进入休息
+  [PASS] 低精力时开始 rest
+  [PASS] rest 后 energy 恢复（实际 22.879000）
+PET-03②: activity=1 → walk
+  [PASS] 首个决策选 walk（实际 walk）
+PET-03③: curiosity=1 → look_around
+  [PASS] 首个决策选 look_around（实际 look_around）
+PET-04: happy 奖励只一次
+  [PASS] happy 请求被接受
+  [PASS] comfort=51.996（实际 51.996000）
+  [PASS] social_need=45.01（实际 45.010000）
+  [PASS] 重复事件不重复奖励（comfort=51.996000）
+PET-04: happy 失败无奖励
+  [PASS] 失败无 comfort 奖励（50.000000）
+  [PASS] 失败无 social 奖励（50.000000）
+PET-04 回归(P0-003): 取消后旧事件不发奖
+  [PASS] 第一次 happy 被接受
+  [PASS] 第二次 happy 被接受（冷却已过）
+  [PASS] 实例 ID 单调递增不重复（1 vs 2）
+  [PASS] 旧实例事件不发奖（comfort 保持 49.995000）
+  [PASS] 旧实例事件不结束当前动作（当前 react_happy）
+  [PASS] 当前实例事件正常发奖（comfort=51.995000）
+PET-04 回归(P0-003): 已关闭实例拒绝重放
+  [PASS] 重放已关闭实例不发奖（52.000000 == 52.000000）
+  [PASS] instance_id<=0 的事件被忽略
+SIM-03: 时间断点无惩罚
+  [PASS] time_gap 被记录
+  [PASS] 断点不扣需求
+SIM-03 回归: 断点清空累加器
+  [PASS] 断点前存在余数（0.070000）
+  [PASS] 断点后余数清零（0.000000）
+SIM-04: 墙钟回拨无惩罚
+  [PASS] 回拨后 tick 不异常增加（100 == 100）
+环境注入: set_can_walk 生效
+  [PASS] can_walk=false 时不启动 walk（0 个动作）
+  [PASS] can_walk=true 时 walk 可启动（1 个动作）
+ALL SIM/PET TESTS PASSED

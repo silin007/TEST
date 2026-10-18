@@ -1,0 +1,7 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+[MOTE] action_started look_around #1
+MEASURE SAVE-07 wall_seconds=3.000 disk_schema=999.0 autosave_stopped=true
+PASS SAVE-07: unknown future save must remain byte-identical after startup debounce
+PASS SAVE-07: startup must not replace future schema with v1
+INTEGRATION AUDIT RESULT: checks=2 failures=0

@@ -4,6 +4,8 @@
 
 ## 最新 P0 验收结论（2026-10-18）
 
+**独立复验补充（9df836e）：** 四套测试 **230 条**、补充检查 **16 条**、Windows DEBUG 导出构建原生专项 **15 条**全部通过。P0-006 最小化与恢复回调、隐藏期间短时时钟推进、FULL 当前尺寸布局均取得证据，叶子骨骼告警未再出现。**P0 整体仍未通过**：物理托盘、跨应用穿透、平台矩阵和 60 分钟运行等仍待完成。导出专项已补齐下文“仍须导出复验”的部分范围，未替代完整 WIN-06。详见 [9df836e 独立复验报告](tests/manual/results/2026-10-18-9df836e-recheck/report.md)。以下保留此前结论及修复说明。
+
 **P0 整体仍未通过，但 P0-006 已修复。** 修复后独立复验确认四套原有测试 221 条、上轮补充检查 16 条全部通过，且本机导出构建透明与快速双击基本操作成功。复验新发现 **P0-006：点击隐藏时引擎报 `Can't change visibility of main window`，应用进入 HIDDEN 后窗口仍可见**（阻塞 WIN-06）。该缺陷现已修复：改为 **DisplayServer 最小化 + 回读校验 + 失败整体回滚**，已在真实 Windows 驱动下验证隐藏与恢复；复验报告见 [08df5df 独立复验](tests/manual/results/2026-10-18-08df5df-recheck/report.md)，修复细节见 [实施记录 §3.3](docs/p0_执行记录_草案_2026-10-18.md)。
 
 同期修复复验 §5 指出的 FULL 按钮裁切：**真正根因是 `canvas_items` 拉伸使 UI 画布只有 384×256**（按钮被压成两行后溢出、诊断区高度塌成 0），已改 `stretch/mode="disabled"`，实测面板 960×640、六按钮一行完整显示。
@@ -174,3 +176,4 @@ git push
 ## 诊断入口（架构 §8）
 
 `AppController` 提供：`get_diagnostics()`（需求/动作/模式/入口/存档 revision/路径）、`debug_advance(seconds)`、`debug_set_save_fault(stage, enabled)`；`SaveService` 提供 `set_fault()` 与 `get_diagnostics()`。完整窗口（FULL）界面会显示只读诊断与存档恢复候选。
+

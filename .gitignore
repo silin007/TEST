@@ -22,3 +22,8 @@ logs/
 
 # Local AI/editor session state (per-machine, not project content)
 .workbuddy/
+
+# 第三方插件：Windows Mouse Passthrough（评估中，待确认是否入库）
+# 含预编译 DLL，入库需先决定协议合规与导出打包方式，确认前排除。
+# 详见 docs/插件评估_草案_2026-10-18.md
+addons/

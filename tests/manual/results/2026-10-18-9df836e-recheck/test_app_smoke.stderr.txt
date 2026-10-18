@@ -1,0 +1,42 @@
+WARNING: [MOTE] action_failed react_happy #1: app_shutdown（回退 idle）
+   at: push_warning (core/variant/variant_utility.cpp:1033)
+   GDScript backtrace (most recent call first):
+       [0] _on_action_finished (res://scripts/app/app_controller.gd:323)
+       [1] _on_executor_finished (res://scripts/pet/pet_simulation.gd:280)
+       [2] _finish (res://scripts/pet/action_executor.gd:147)
+       [3] cancel_current_action (res://scripts/pet/action_executor.gd:76)
+       [4] shutdown_app (res://scripts/app/app_controller.gd:596)
+       [5] _process (res://tests/unit/test_app_smoke.gd:72)
+ERROR: [MOTE] 保存失败 { "stage": "TMP_WRITE", "path": "user://test_sandbox/app/saves/save.tmp.json", "code": 13, "message": "故障注入：临时档写入失败" }
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _commit_save (res://scripts/app/app_controller.gd:386)
+       [1] shutdown_app (res://scripts/app/app_controller.gd:598)
+       [2] _process (res://tests/unit/test_app_smoke.gd:72)
+ERROR: [MOTE] 退出保存失败，进程保持可用：{ "stage": "TMP_WRITE", "path": "user://test_sandbox/app/saves/save.tmp.json", "code": 13, "message": "故障注入：临时档写入失败" }
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] shutdown_app (res://scripts/app/app_controller.gd:604)
+       [1] _process (res://tests/unit/test_app_smoke.gd:72)
+ERROR: WindowController: 当前平台不支持原生隐藏，拒绝进入 HIDDEN
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _hide_native (res://scripts/desktop/window_controller.gd:206)
+       [1] _apply_native_attributes (res://scripts/desktop/window_controller.gd:186)
+       [2] apply_mode (res://scripts/desktop/window_controller.gd:104)
+       [3] switch_mode (res://scripts/app/app_controller.gd:194)
+       [4] _test_p006_hidden_no_divergence (res://tests/unit/test_app_smoke.gd:101)
+       [5] _process (res://tests/unit/test_app_smoke.gd:78)
+ERROR: WindowController: 平台拒绝进入 HIDDEN（2），回滚到 FLOATING
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] apply_mode (res://scripts/desktop/window_controller.gd:106)
+       [1] switch_mode (res://scripts/app/app_controller.gd:194)
+       [2] _test_p006_hidden_no_divergence (res://tests/unit/test_app_smoke.gd:101)
+       [3] _process (res://tests/unit/test_app_smoke.gd:78)
+ERROR: AppController.switch_mode: HIDDEN 失败（err=2），回退 FLOATING
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] switch_mode (res://scripts/app/app_controller.gd:199)
+       [1] _test_p006_hidden_no_divergence (res://tests/unit/test_app_smoke.gd:101)
+       [2] _process (res://tests/unit/test_app_smoke.gd:78)

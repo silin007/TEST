@@ -1,0 +1,17 @@
+WARNING: [MOTE] 窗口几何已修正：outside_usable_rect
+   at: push_warning (core/variant/variant_utility.cpp:1033)
+   GDScript backtrace (most recent call first):
+       [0] _on_geometry_corrected (res://scripts/app/app_controller.gd:513)
+       [1] validate_geometry (res://scripts/desktop/window_controller.gd:372)
+       [2] apply_mode (res://scripts/desktop/window_controller.gd:121)
+       [3] switch_mode (res://scripts/app/app_controller.gd:194)
+       [4] start_app (res://scripts/app/app_controller.gd:107)
+       [5] _ready (res://scripts/app/app_controller.gd:82)
+WARNING: [MOTE] 窗口几何已修正：outside_usable_rect
+   at: push_warning (core/variant/variant_utility.cpp:1033)
+   GDScript backtrace (most recent call first):
+       [0] _on_geometry_corrected (res://scripts/app/app_controller.gd:513)
+       [1] validate_geometry (res://scripts/desktop/window_controller.gd:372)
+       [2] apply_mode (res://scripts/desktop/window_controller.gd:121)
+       [3] switch_mode (res://scripts/app/app_controller.gd:194)
+       [4] _run (res://audit/native_recheck.gd:17)
