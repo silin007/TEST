@@ -1,0 +1,21 @@
+# Normalize line endings deterministically, independent of core.autocrlf.
+# Godot text resources and GDScript are LF; Windows batch files MUST be CRLF
+# (cmd mis-parses goto / parenthesised blocks in LF-only .bat files).
+
+* text=auto eol=lf
+
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ogg binary
+*.wav binary
+*.mp3 binary
+*.ttf binary
+*.otf binary
+*.res binary
+*.scn binary

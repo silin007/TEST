@@ -1,0 +1,24 @@
+# Godot cache (never commit)
+.godot/
+*.translation
+
+# Exported builds
+build/
+export/
+
+# Local user data: saves, logs, quarantined backups
+.userdata/
+user://
+
+# Editor/OS clutter
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
+
+# Keep real user saves & logs out of version control (architecture v0.1 §9)
+saves/
+logs/
+
+# Local AI/editor session state (per-machine, not project content)
+.workbuddy/

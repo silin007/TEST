@@ -1,0 +1,16 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/app/app_controller.gd" id="1_app"]
+[ext_resource type="Script" path="res://scripts/desktop/window_controller.gd" id="2_win"]
+[ext_resource type="PackedScene" path="res://scenes/pet/pet.tscn" id="3_pet"]
+[ext_resource type="PackedScene" path="res://scenes/ui/full_panel.tscn" id="4_panel"]
+
+[node name="Main" type="Node"]
+script = ExtResource("1_app")
+
+[node name="WindowController" type="Node" parent="."]
+script = ExtResource("2_win")
+
+[node name="Pet" parent="." instance=ExtResource("3_pet")]
+
+[node name="FullPanel" parent="." instance=ExtResource("4_panel")]

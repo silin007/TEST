@@ -1,0 +1,56 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="MOTE"
+config/features=PackedStringArray("4.7", "Mobile")
+config/icon="res://icon.svg"
+run/main_scene="res://scenes/app/main.tscn"
+
+[autoload]
+
+; 无 Autoload 全局事件总线：按架构 v0.1，仅 AppController 为根节点，
+; 其余模块通过显式依赖注入组装。
+
+[display]
+
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/size/viewport_width=256
+window/size/viewport_height=256
+window/size/window_width_override=256
+window/size/window_height_override=256
+; 透明悬浮桌面窗口初始属性（阶段 1 锁定；验收以独立导出构建为准）
+window/transparent=true
+window/borderless=true
+window/always_on_top=true
+window/initial_position="primary_center"
+
+[physics]
+
+3d/physics_engine="Jolt Physics"
+
+[rendering]
+
+renderer/rendering_method="mobile"
+rendering_device/driver.windows="d3d12"
+
+[debug]
+
+gdscript/warnings/untyped_declaration=2
+gdscript/warnings/untyped_declaration/level=2
+gdscript/warnings/unsafe_property_access=2
+gdscript/warnings/unsafe_method_access=2
+gdscript/warnings/enable_all_warnings=true
+
+[gdextension]
+
+; 暂无 C# / GDExtension 依赖；GDScript 2.0 静态类型即可满足 P0
