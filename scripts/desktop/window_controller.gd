@@ -17,9 +17,27 @@ const FULL_SIZE := Vector2i(960, 640)
 ## 校验周期：每 2 秒检查显示器/工作区变化（架构 §4.2）
 const VALIDATE_INTERVAL := 2.0
 
+## 第三方 GDExtension「Windows Mouse Passthrough」的 singleton 名（MIT，可选依赖）。
+## 作用：直接对 HWND 设置 WS_EX_LAYERED | WS_EX_TRANSPARENT，实现跨应用穿透（WIN-02）。
+## 架构 §4.3 已记录：Godot 原生 Window.mouse_passthrough 不能据此承诺跨应用穿透。
+## 该扩展是可选增强：缺失时回退原生方案，功能不缺失，仅穿透范围收窄为同应用。
+const MP_SINGLETON := "MousePassthrough"
+
 ## 拖动判定阈值（像素）：按下后移动超过此距离才算拖动（P0-005）。
 ## 低于阈值视为点击，不抑制后续点击，保证双击可用。
 const DRAG_THRESHOLD := 4.0
+
+## 穿透级别。语义严格区分「已请求」与「已验证」（复评 §3.2）：
+## - system_requested：已向 Win32 扩展发出系统级穿透请求。
+##   **不代表样式已生效**——上游 set_passthrough 返回 void，HWND 为空时直接返回，
+##   且不检查 Windows API 结果；本地也无 WS_EX 样式位回读接口。
+## - app：只有原生 Window.mouse_passthrough（同一应用内），跨应用不保证。
+## - none：不穿透。
+## 因此本文件**不存在** "verified" 级别。跨应用穿透是否真的生效，
+## 只能由人工在独立导出构建上点击外部应用验证（WIN-02），代码不得宣称已验证。
+const PASSTHROUGH_SYSTEM_REQUESTED := "system_requested"
+const PASSTHROUGH_APP := "app"
+const PASSTHROUGH_NONE := "none"
 
 var _mode: StringName = AppMode.FLOATING
 var _mouse_mode: StringName = AppMode.MOUSE_INTERACTIVE
@@ -36,6 +54,11 @@ var _floating_rect: Rect2i = Rect2i(100, 100, FLOATING_SIZE.x, FLOATING_SIZE.y)
 var _full_rect: Rect2i = Rect2i(100, 100, FULL_SIZE.x, FULL_SIZE.y)
 var _screen_hint: int = 0
 var _validate_timer: float = 0.0
+## 当前生效的穿透级别（供诊断）：system / app / none。
+## 全静态类型下 GDExtension singleton 的方法无法静态推导，必须动态调用，
+## 因此这里只记录"调用是否成功"，不假设扩展一定存在。
+var _passthrough_level: String = PASSTHROUGH_NONE
+## 当前模式是否允许走动（策略 can_walk，架构 §4）
 var _can_walk: bool = true
 ## 当前模式是否接受焦点（策略 allow_focus，架构 §4）。
 ## FLOATING/FOCUS/HIDDEN 不抢焦点，避免宠物窗在用户打字时把输入焦点夺走。
@@ -114,11 +137,13 @@ func apply_mode(mode: StringName, policy: Dictionary) -> Error:
 		return err
 
 	var mouse_mode: StringName = policy.get("mouse_mode", AppMode.MOUSE_INTERACTIVE) as StringName
-	err = set_mouse_mode_internal(mouse_mode) if err == OK else err
 	_can_walk = bool(policy.get("can_walk", true))
 	_allow_focus = bool(policy.get("allow_focus", false))
 	_apply_focus_policy()
 	validate_geometry()
+	# 穿透必须最后应用（复评 §3.2）：尺寸/置顶/焦点/几何纠偏都可能改动窗口样式，
+	# 若引擎因此清除 WS_EX 标志，先设的穿透就会静默失效。
+	err = set_mouse_mode_internal(mouse_mode) if err == OK else err
 	mode_applied.emit(mode, _mouse_mode, err)
 	return err
 
@@ -144,10 +169,47 @@ func set_mouse_mode_internal(mouse_mode: StringName) -> Error:
 			# 注意：官方描述不保证跨应用命中，跨应用穿透必须在独立导出构建上实测（WIN-02）。
 			win.mouse_passthrough_polygon = PackedVector2Array()
 			win.mouse_passthrough = true
+			# 可选增强：Win32 扩展实现系统级（跨应用）穿透。
+			# 失败或扩展缺失则保留原生同应用穿透，功能不缺失，但级别如实降级。
+			_passthrough_level = PASSTHROUGH_APP
+			if _set_system_passthrough(win.get_window_id(), true):
+				# 仅为"请求已发出"。不得写成已验证：上游无返回值、无样式回读。
+				_passthrough_level = PASSTHROUGH_SYSTEM_REQUESTED
 		_:
 			win.mouse_passthrough = false
 			win.mouse_passthrough_polygon = PackedVector2Array()
+			_set_system_passthrough(win.get_window_id(), false)
+			_passthrough_level = PASSTHROUGH_NONE
 	return OK
+
+
+## 向可选 GDExtension 发出系统级穿透请求。返回是否**成功发出请求**。
+##
+## 语义边界（复评 §3.2）：返回 true **只表示调用已发出**，不表示 Win32 样式已生效。
+## 上游 set_passthrough 返回 void，HWND 为空时直接返回，且不检查 Windows API 结果；
+## 本地也没有 WS_EX 样式位回读接口。因此调用方不得据此宣称跨应用穿透已生效。
+##
+## 全静态类型（enable_all_warnings）下无法写 mp.set_passthrough(...)，
+## 会报 "not present on the inferred type Object"，故用 Object.call 动态调用。
+func _set_system_passthrough(window_id: int, enabled: bool) -> bool:
+	if not Engine.has_singleton(MP_SINGLETON):
+		return false
+	var mp: Object = Engine.get_singleton(MP_SINGLETON)
+	if mp == null or not mp.has_method("set_passthrough"):
+		return false
+	mp.call("set_passthrough", window_id, enabled)
+	return true
+
+
+## 当前穿透级别（诊断用）：system_requested / app / none。
+## 三者均**非**"已验证"；跨应用生效须人工在导出构建上点击取证（WIN-02）。
+func get_passthrough_level() -> String:
+	return _passthrough_level
+
+
+## 系统级（跨应用）穿透扩展是否可用
+func has_system_passthrough() -> bool:
+	return Engine.has_singleton(MP_SINGLETON)
 
 
 ## 焦点策略（架构 §4）：allow_focus=false 时窗口不抢占焦点。
@@ -400,6 +462,7 @@ func get_environment() -> Dictionary:
 		"can_walk": _can_walk and not _dragging,
 		"dragging": _dragging,
 		"screen_hint": _screen_hint,
+		"passthrough_level": _passthrough_level,
 	}
 
 

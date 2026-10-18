@@ -75,6 +75,7 @@ func _process(delta: float) -> bool:
 		_controller.debug_set_save_fault(SaveService.STAGE_TMP_WRITE, false)
 		svc.clear_all_for_test()
 		_test_win05_click_vs_drag(_controller)
+		_test_win02_passthrough_level(_controller)
 		_test_p006_hidden_no_divergence(_controller)
 		_test_full_layout_not_clipped(_controller)
 		_finish()
@@ -232,6 +233,51 @@ func _test_win05_click_vs_drag(controller: AppController) -> void:
 	_check(not wc.is_dragging(), "WIN-05 模式切换后不遗留拖动状态")
 	wc._end_press()
 	_check(ends.size() == 1, "WIN-05 模式切换不额外触发 drag_ended")
+
+
+## WIN-02 穿透分级（环境自适应）：验证 GDExtension 守卫与降级。
+## 断言不假设扩展一定存在，而是校验「能力 → 级别」的对应关系：
+##   有 MousePassthrough → system_requested；无 → app（仅同应用），不得虚报。
+##
+## 语义注意（复评 §3.2）：system_requested 只表示"请求已发出"。
+## 上游 set_passthrough 返回 void 且不检查 Windows API 结果，本地也无样式位回读，
+## 因此**不存在"已验证"级别**；跨应用生效只能由人工点击取证，代码不得宣称。
+func _test_win02_passthrough_level(controller: AppController) -> void:
+	print("WIN-02 穿透分级（GDExtension 守卫与降级）")
+	var wc: WindowController = controller.get_node("WindowController") as WindowController
+	if wc == null:
+		_check(false, "WIN-02 取得 WindowController")
+		return
+
+	wc.set_recovery_ready(true)
+	var available := wc.has_system_passthrough()
+
+	# 进入穿透
+	_check(wc.set_mouse_mode(AppMode.MOUSE_PASSTHROUGH) == OK, "WIN-02 进入穿透成功")
+	var level: String = wc.get_passthrough_level()
+	var expected: String = WindowController.PASSTHROUGH_SYSTEM_REQUESTED if available else WindowController.PASSTHROUGH_APP
+	_check(level == expected,
+		"WIN-02 穿透级别与能力一致（available=%s → %s，实际 %s）" % [available, expected, level])
+	_check(level != WindowController.PASSTHROUGH_NONE, "WIN-02 穿透模式下级别不得为 none")
+
+	# 诊断与环境必须同步暴露，便于人工取证时确认当前真实穿透范围
+	var diag: Dictionary = controller.get_diagnostics()
+	_check(diag.get("passthrough_level", "") == level,
+		"WIN-02 诊断暴露穿透级别（%s）" % diag.get("passthrough_level", "<缺失>"))
+	_check(diag.get("system_passthrough_available", null) == available,
+		"WIN-02 诊断暴露扩展可用性")
+	var env: Dictionary = wc.get_environment()
+	_check(env.get("passthrough_level", "") == level, "WIN-02 环境暴露穿透级别")
+
+	# 退出穿透必须归零，不能残留系统级标志
+	_check(wc.set_mouse_mode(AppMode.MOUSE_INTERACTIVE) == OK, "WIN-02 退出穿透成功")
+	_check(wc.get_passthrough_level() == WindowController.PASSTHROUGH_NONE,
+		"WIN-02 退出后级别归零（实际 %s）" % wc.get_passthrough_level())
+	# 语义护栏：任何级别都不得自称"已验证"。跨应用生效只能人工取证。
+	_check(not level.contains("verified"),
+		"WIN-02 级别不得自称已验证（实际 %s）；跨应用生效须人工点击取证" % level)
+	print("  注：available=%s，级别=%s（未验证）；跨应用效果仍需人工在导出构建上点击验证"
+		% [available, level])
 
 
 func _check(condition: bool, label: String) -> void:

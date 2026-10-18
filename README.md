@@ -76,8 +76,14 @@ tests\run_tests.bat
 | `test_simulation.gd` | SIM-01～04、PET-03①②③、PET-04①③；含 **P0-002 跨帧累加器**（60/75/144 FPS × 60s）与 **P0-003 陈旧事件拒奖**回归 | 47 |
 | `test_animation.gd` | PET-01 真实 Skeleton2D/Bone2D 运动、PET-02 映射与失败返回 | 25 |
 | `test_save.gd` | SAVE-01/03/04/05/06/07；含 **P0-001 写入锁**（未知版本在自动保存链路中存活）与显式新建事务回归 | 119 |
-| `test_app_smoke.gd` | 主场景装配、启动模式、受控时钟、保存链路、退出事务；含 **P0-005 单击/双击/拖动互斥**、**P0-006 隐藏失败不分裂**与 **FULL 布局不裁切**回归 | 39 |
-| **合计** | | **230** |
+| `test_app_smoke.gd` | 主场景装配、启动模式、受控时钟、保存链路、退出事务；含 **P0-005 单击/双击/拖动互斥**、**P0-006 隐藏失败不分裂**、**FULL 布局不裁切**、**WIN-02 穿透分级（环境自适应）**回归 | 47 |
+| **合计** | | **238** |
+
+> **WIN-02 穿透分级**：`WindowController` 可选接入 GDExtension「Windows Mouse Passthrough」（MIT，本地 `addons/`，未入库）。
+> 三档：`system_requested`（已向 Win32 发出请求）／`app`（仅同应用）／`none`。
+> **三者均非"已验证"**——上游 `set_passthrough` 返回 void 且不检查 Windows API 结果，本地也无 WS_EX 样式位回读，
+> 因此代码不宣称样式生效。诊断的 `passthrough_level` 与 `system_passthrough_available` 供人工取证时确认当前状态。
+> **跨应用点击效果仍须人工在导出构建上验证**，自动化不能替代（WIN-02）。
 
 新增/修改脚本后若报 “Identifier/class not found”，先刷新类缓存：
 

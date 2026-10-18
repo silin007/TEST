@@ -638,6 +638,10 @@ func get_diagnostics() -> Dictionary:
 		"save_status": _save_status,
 		"load_problem": _load_problem,
 		"last_mode_error": _last_mode_error,
+		# 穿透范围（WIN-02）：system=跨应用（Win32 扩展生效）；app=仅同应用；none=不穿透。
+		# 只有 system 才说明具备跨应用穿透能力，另两者不得宣称满足 WIN-02。
+		"passthrough_level": _window_controller.get_passthrough_level() if _window_controller != null else "none",
+		"system_passthrough_available": _window_controller.has_system_passthrough() if _window_controller != null else false,
 	}
 	# 平台侧真实状态（P0-006）：诊断不能只报应用内部 mode，必须同时给出窗口实际状态
 	if _window_controller != null:
