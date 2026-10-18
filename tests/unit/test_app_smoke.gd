@@ -75,9 +75,101 @@ func _process(delta: float) -> bool:
 		_controller.debug_set_save_fault(SaveService.STAGE_TMP_WRITE, false)
 		svc.clear_all_for_test()
 		_test_win05_click_vs_drag(_controller)
+		_test_p006_hidden_no_divergence(_controller)
+		_test_full_layout_not_clipped(_controller)
 		_finish()
 		return true
 	return false
+
+
+## P0-006 回归：平台不能隐藏时，HIDDEN 必须失败且**不得**提交应用状态。
+## 复验报告实测到旧实现的分裂：应用 mode=HIDDEN、平台 Window.visible=true 且窗口仍在桌面。
+## headless 下不存在可隐藏的窗口表面（_can_hide_natively()=false），正好覆盖"平台拒绝"分支。
+func _test_p006_hidden_no_divergence(controller: AppController) -> void:
+	print("P0-006 回归: 平台拒绝隐藏时不提交 HIDDEN")
+	var wc: WindowController = controller.get_node("WindowController") as WindowController
+	if wc == null:
+		_check(false, "P0-006 取得 WindowController")
+		return
+
+	# 放开恢复入口限制，确保测到的是"原生隐藏"这一步而不是前置拒绝
+	wc.set_recovery_ready(true)
+	var before_mode: StringName = controller.get_mode()
+	var can_hide: bool = bool(wc.get_platform_state()["can_hide"])
+	print("  平台 can_hide=", can_hide)
+
+	var err: Error = controller.switch_mode(AppMode.HIDDEN)
+	var st: Dictionary = wc.get_platform_state()
+
+	if can_hide:
+		# 有真实窗口表面（例如 GUI 运行）：成功路径必须真的最小化
+		_check(err == OK, "P0-006 有原生能力时 HIDDEN 成功（err=%d）" % err)
+		_check(bool(st["minimized"]), "P0-006 成功后平台确实 minimized")
+	else:
+		# 平台拒绝：必须报错、回滚模式、且不宣称已隐藏
+		_check(err != OK, "P0-006 平台拒绝时返回错误（err=%d）" % err)
+		_check(controller.get_mode() == before_mode,
+			"P0-006 失败后模式回滚为 %s（实际 %s）" % [before_mode, controller.get_mode()])
+		_check(not bool(st["hidden_by_minimize"]),
+			"P0-006 失败后不记录为已隐藏")
+		_check(controller.get_diagnostics()["last_mode_error"] != "",
+			"P0-006 失败原因进入诊断（用户可见）")
+
+	# 无论哪条分支，诊断都必须同时给出平台真实状态，而不只是应用内部 mode
+	var diag: Dictionary = controller.get_diagnostics()
+	_check(diag.has("window_mode") and diag.has("minimized"),
+		"P0-006 诊断同时暴露平台窗口状态")
+	wc.set_recovery_ready(false)
+
+
+## 复验 §5 回归：FULL 面板不得裁切控件。
+## 根因是 canvas_items 拉伸让 UI 画布只有 384×256，按钮被压成两行后溢出。
+func _test_full_layout_not_clipped(controller: AppController) -> void:
+	print("布局回归: FULL 面板不裁切")
+	controller.switch_mode(AppMode.FULL)
+	if controller.get_mode() != AppMode.FULL:
+		_check(false, "布局 进入 FULL 失败")
+		return
+
+	var panel: Control = controller.get_node("FullPanel") as Control
+	var win := controller.get_window()
+	if panel == null or win == null:
+		_check(false, "布局 取得面板/窗口")
+		return
+
+	# 面板尺寸必须等于窗口尺寸（不得停留在 256 基线）
+	_check(panel.size.x >= float(win.size.x) - 1.0 and panel.size.y >= float(win.size.y) - 1.0,
+		"布局 面板 %.0f×%.0f 覆盖窗口 %s" % [panel.size.x, panel.size.y, win.size])
+
+	# 每个按钮都必须完整落在面板内
+	var overflow: Array[String] = []
+	var count: int = 0
+	for node: Node in _walk(panel):
+		if node is Button:
+			count += 1
+			var b: Button = node as Button
+			var right: float = b.global_position.x + b.size.x
+			if right > panel.size.x + 1.0 or b.global_position.y + b.size.y > panel.size.y + 1.0:
+				overflow.append("%s(右=%.0f)" % [b.text, right])
+	_check(count >= 6, "布局 面板内按钮数量=%d" % count)
+	_check(overflow.is_empty(), "布局 无按钮越界（越界项：%s）" % ", ".join(overflow))
+
+	# 诊断区必须有实际高度，不能塌成 0
+	var scroll_ok := false
+	for node: Node in _walk(panel):
+		if node is ScrollContainer:
+			if (node as Control).size.y >= 40.0:
+				scroll_ok = true
+	_check(scroll_ok, "布局 诊断滚动区高度充足")
+	controller.switch_mode(AppMode.FLOATING)
+
+
+func _walk(root_node: Node) -> Array[Node]:
+	var out: Array[Node] = []
+	for child: Node in root_node.get_children():
+		out.append(child)
+		out.append_array(_walk(child))
+	return out
 
 
 ## WIN-05 回归（P0-005）：单击 / 双击 / 拖动三者必须互斥。

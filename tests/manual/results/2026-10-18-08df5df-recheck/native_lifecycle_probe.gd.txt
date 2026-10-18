@@ -1,0 +1,43 @@
+extends Node
+## 原生平台集成测试：调用应用已有回调，验证回调执行后的真实 Window.visible。
+## 不验证物理托盘点击可达性，也不发送 Windows 输入。
+var _measurements: Array[Dictionary] = []
+var _failures: int = 0
+
+func _ready() -> void:
+	_run.call_deferred()
+
+func _run() -> void:
+	if DisplayServer.get_name() != "Windows":
+		print("NATIVE LIFECYCLE: requires Windows display driver, refusing headless verdict")
+		get_tree().quit(2)
+		return
+	var app: AppController = get_parent() as AppController
+	await get_tree().create_timer(1.0).timeout
+	var full_error: Error = app.switch_mode(AppMode.FULL)
+	await get_tree().create_timer(0.3).timeout
+	_record(app, "initial_full", full_error == OK and get_window().visible)
+	var hidden_error: Error = app.switch_mode(AppMode.HIDDEN)
+	await get_tree().create_timer(0.3).timeout
+	_record(app, "hidden_from_full", hidden_error == OK and not get_window().visible)
+	app._on_recovery_action(RecoveryEntry.ACTION_SHOW_PET)
+	await get_tree().create_timer(0.3).timeout
+	_record(app, "show_pet_after_hidden_full", app.get_mode() == AppMode.FULL and get_window().visible)
+	app._on_recovery_action(RecoveryEntry.ACTION_OPEN_FULL)
+	await get_tree().create_timer(0.3).timeout
+	_record(app, "open_full_after_hidden", app.get_mode() == AppMode.FULL and get_window().visible)
+	app._on_recovery_action(RecoveryEntry.ACTION_RESTORE_INTERACT)
+	await get_tree().create_timer(0.3).timeout
+	_record(app, "restore_interaction_fallback", app.get_mode() == AppMode.FLOATING and get_window().visible)
+	var file := FileAccess.open("user://native_lifecycle_result.json",FileAccess.WRITE)
+	file.store_string(JSON.stringify({"checks":_measurements.size(),"failures":_failures,"display_driver":DisplayServer.get_name(),"measurements":_measurements},"\t"))
+	file.close()
+	print("NATIVE LIFECYCLE RESULT: checks=%d failures=%d" % [_measurements.size(),_failures])
+	get_tree().quit(0 if _failures == 0 else 1)
+
+func _record(app: AppController,stage: String,passed: bool) -> void:
+	var row: Dictionary = {"stage":stage,"passed":passed,"mode":str(app.get_mode()),"visible":get_window().visible,"mouse_mode":str(app.get_mouse_mode()),"recovery_ready":app.get_diagnostics()["recovery_ready"]}
+	_measurements.append(row)
+	if not passed:
+		_failures += 1
+	print(("PASS " if passed else "FAIL ")+JSON.stringify(row))

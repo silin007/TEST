@@ -1,0 +1,18 @@
+ERROR: Parse JSON failed. Error at line 0: Expected key
+   at: parse_string (core/io/json.cpp:629)
+   GDScript backtrace (most recent call first):
+       [0] _parse_file (res://scripts/persistence/save_service.gd:616)
+       [1] load_snapshot (res://scripts/persistence/save_service.gd:263)
+       [2] test_main_corrupt_with_valid_backup (res://tests/unit/test_save.gd:219)
+       [3] _run_all (res://tests/unit/test_save.gd:56)
+       [4] _process (res://tests/unit/test_save.gd:26)
+ERROR: Parse JSON failed. Error at line 0: Expected key
+   at: parse_string (core/io/json.cpp:629)
+   GDScript backtrace (most recent call first):
+       [0] _parse_file (res://scripts/persistence/save_service.gd:616)
+       [1] _is_valid_snapshot_file (res://scripts/persistence/save_service.gd:625)
+       [2] _commit (res://scripts/persistence/save_service.gd:420)
+       [3] restore_from_candidate (res://scripts/persistence/save_service.gd:227)
+       [4] test_main_corrupt_with_valid_backup (res://tests/unit/test_save.gd:238)
+       [5] _run_all (res://tests/unit/test_save.gd:56)
+       [6] _process (res://tests/unit/test_save.gd:26)

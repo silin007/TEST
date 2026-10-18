@@ -1,0 +1,38 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS 装配：主场景根节点为 AppController
+PASS 装配：存在 WindowController
+PASS 装配：存在 Pet 骨骼角色
+PASS 装配：存在 FullPanel
+PASS 启动默认 FLOATING，实际=FLOATING
+  诊断: {"autosave_stopped":false,"bak_file":"C:/Users/lynn_/AppData/Roaming/MOTE_P0_AUDIT_INTEGRATION_RECHECK_08df5df/test_sandbox/app/saves/save.bak.json","current_action":"idle","last_error":{},"load_problem":"","log_file":"C:/Users/lynn_/AppData/Roaming/MOTE_P0_AUDIT_INTEGRATION_RECHECK_08df5df/test_sandbox/app/logs/mote.log","log_memory_lines":0,"log_write_failed":false,"main_file":"C:/Users/lynn_/Ap
+PASS 装配：模拟时钟已启动
+  恢复入口就绪=true
+PASS 互动请求返回 accepted/reason
+PASS 受控时钟：推进 1.0 秒得到 10 个 tick，实际=10
+  推进后 tick=10 模拟秒=1.0 动作=react_happy
+PASS 受控时钟：模拟秒数已累加
+PASS 保存链路：显式保存成功
+PASS 保存链路：已产生主档
+PASS 保存链路：重启可加载 OK，实际=OK
+[MOTE] action_finished react_happy #1 success=false reason=app_shutdown
+PASS 退出事务：保存失败时退出被拒绝
+PASS 退出事务：保存失败后撤销冻结，进程保持可用
+WIN-05 回归(P0-005): 单击/双击/拖动互斥
+PASS WIN-05 零位移按下不算拖动
+PASS WIN-05 零位移释放后 did_drag_occur=false（双击可用）
+PASS WIN-05 零位移不触发 drag_ended（不抑制点击）
+PASS WIN-05 零位移不触发 drag_started
+PASS WIN-05 2px 抖动仍在阈值内
+PASS WIN-05 阈值内抖动不触发 drag_ended
+PASS WIN-05 越过阈值后 did_drag_occur=true
+PASS WIN-05 越过阈值后进入拖动状态
+PASS WIN-05 drag_started 恰好触发一次（实际 1）
+PASS WIN-05 释放后退出拖动状态
+PASS WIN-05 drag_ended 恰好触发一次（实际 1）
+PASS WIN-05 拖动结束后 did_drag_occur 仍为 true（供上层抑制本次点击）
+PASS WIN-05 新的一次按下复位拖动标记
+PASS WIN-05 复位不额外触发 drag_ended
+PASS WIN-05 模式切换后不遗留拖动状态
+PASS WIN-05 模式切换不额外触发 drag_ended
+ALL APP SMOKE TESTS PASSED

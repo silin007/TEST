@@ -53,6 +53,8 @@ var _walk_dir: int = 1
 var _pending_shutdown: bool = false
 var _save_status: String = "未保存"
 var _load_problem: String = ""
+## 最近一次模式切换失败的原因（P0-006：平台拒绝隐藏时必须让用户看见，不能静默）
+var _last_mode_error: String = ""
 var _saved_mode_for_startup: StringName = AppMode.FLOATING
 
 
@@ -192,12 +194,18 @@ func switch_mode(mode: StringName) -> Error:
 	var err: Error = _window_controller.apply_mode(mode, policy)
 	if err != OK:
 		# 失败返回原可用状态，不留下“UI 已切换、窗口未切换”的状态
-		push_error("AppController.switch_mode: %s 失败（%d），回退 %s" % [mode, err, old_mode])
+		var detail: String = "%s 失败（err=%d）" % [mode, err]
+		_last_mode_error = detail
+		push_error("AppController.switch_mode: %s，回退 %s" % [detail, old_mode])
 		_window_controller.apply_mode(old_mode, _focus_controller.get_policy(old_mode))
 		mode_switched.emit(old_mode, _window_controller.get_mouse_mode(), err)
+		# 立即把失败原因显示在完整窗口上（若面板已可见）
+		if _panel != null and _panel.visible:
+			_panel.show_mode_error(detail)
 		return err
 
 	# 事务成功后再更新记忆中的返回目标
+	_last_mode_error = ""
 	if mode == AppMode.FOCUS and (old_mode == AppMode.FLOATING or old_mode == AppMode.FULL):
 		_focus_return_mode = old_mode
 		_focus_return_mouse = _window_controller.get_mouse_mode()
@@ -629,7 +637,11 @@ func get_diagnostics() -> Dictionary:
 		"save_path": ProjectSettings.globalize_path(SaveService.main_path()),
 		"save_status": _save_status,
 		"load_problem": _load_problem,
+		"last_mode_error": _last_mode_error,
 	}
+	# 平台侧真实状态（P0-006）：诊断不能只报应用内部 mode，必须同时给出窗口实际状态
+	if _window_controller != null:
+		diag.merge(_window_controller.get_platform_state())
 	diag.merge(_save.get_diagnostics())
 	return diag
 

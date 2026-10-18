@@ -735,4 +735,8 @@ func clear_all_for_test() -> Error:
 	_revision = 0
 	_autosave_stopped = false
 	_last_error = {}
+	# 清档后必须一并解除写入锁与失败态：否则"先触发锁、再清档"的测试会一直处于锁定，
+	# 后续写入被误判为失败（本会话实测到一次该形态的偶发失败）。
+	_write_locked = false
+	_lock_reason = ""
 	return OK

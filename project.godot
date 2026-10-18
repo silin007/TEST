@@ -22,7 +22,7 @@ run/main_scene="res://scenes/app/main.tscn"
 
 [display]
 
-window/stretch/mode="canvas_items"
+window/stretch/mode="disabled"
 window/stretch/aspect="expand"
 window/size/viewport_width=256
 window/size/viewport_height=256

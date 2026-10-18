@@ -1,0 +1,14 @@
+[
+  {
+    "Path": "C:\\Users\\lynn_\\Documents\\Codex\\2026-10-18\\architecture-md-p0-acceptance-md-x20\\work\\p0-recheck-08df5df\\build\\MOTE_P0_NativeLifecycle.exe",
+    "Hash": "FD16FDC039A69BA6FCA6A779B74B5ECE5C75B509DB8D5F498628CB995FA85BE2"
+  },
+  {
+    "Path": "C:\\Users\\lynn_\\Documents\\Codex\\2026-10-18\\architecture-md-p0-acceptance-md-x20\\work\\p0-recheck-08df5df\\build\\MOTE_P0_Recheck.exe",
+    "Hash": "4D8B0352BFC7917F02252D916BA9EC689A6A1BFBEA838CB92618B4A639D57AB6"
+  },
+  {
+    "Path": "C:\\Users\\lynn_\\Documents\\Codex\\2026-10-18\\architecture-md-p0-acceptance-md-x20\\work\\p0-recheck-08df5df\\build\\MOTE_P0_RecheckObserved.exe",
+    "Hash": "907406BB19587E2EA5E7FD7483A3AB2C7472AADB61F88E4130184C5596E36D6F"
+  }
+]

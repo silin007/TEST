@@ -4,13 +4,19 @@
 
 ## 最新 P0 验收结论（2026-10-18）
 
-**本轮报告的 5 个阻塞缺陷已修复，自动化测试 221 条全绿。** 独立验收（[完整报告](tests/manual/results/2026-10-18-cfc09f5-codex/report.md)）曾判定「未通过，暂不进入 P1」，指出正常帧率下模拟不推进、旧动作完成事件误奖励、未知版本存档被自动覆盖、导出后黑底、快速双击不打开完整窗口。五个缺陷的修复与回归断言见 [实施记录 §3.1](docs/p0_执行记录_草案_2026-10-18.md)。
+**P0 整体仍未通过，但 P0-006 已修复。** 修复后独立复验确认四套原有测试 221 条、上轮补充检查 16 条全部通过，且本机导出构建透明与快速双击基本操作成功。复验新发现 **P0-006：点击隐藏时引擎报 `Can't change visibility of main window`，应用进入 HIDDEN 后窗口仍可见**（阻塞 WIN-06）。该缺陷现已修复：改为 **DisplayServer 最小化 + 回读校验 + 失败整体回滚**，已在真实 Windows 驱动下验证隐藏与恢复；复验报告见 [08df5df 独立复验](tests/manual/results/2026-10-18-08df5df-recheck/report.md)，修复细节见 [实施记录 §3.3](docs/p0_执行记录_草案_2026-10-18.md)。
 
-**仍需实机证据的项**（不可用自动化替代）：WIN-01/02/05/06/07、PLAT-01～03、SAVE-02/05/08、FOCUS-01、STAB-01、LOG-01 —— 须在**导出的 Windows 独立构建**上执行。
+同期修复复验 §5 指出的 FULL 按钮裁切：**真正根因是 `canvas_items` 拉伸使 UI 画布只有 384×256**（按钮被压成两行后溢出、诊断区高度塌成 0），已改 `stretch/mode="disabled"`，实测面板 960×640、六按钮一行完整显示。
+
+**边界说明（不夸大）**：隐藏采用最小化实现，窗口不在桌面渲染，但任务栏条目是否消失取决于窗口样式，**托盘级"完全不可见"尚未达成**；且上述验证在编辑器运行环境完成，WIN-06 仍须导出构建复验。
+
+上轮 5 项问题的原始证据见 [首次报告](tests/manual/results/2026-10-18-cfc09f5-codex/report.md)，修复说明见 [实施记录 §3.1](docs/p0_执行记录_草案_2026-10-18.md)；历史记录保留，不覆盖为通过。
+
+**仍需实机证据的项**（不可用自动化替代）：WIN-02/05（组合矩阵）/06（导出构建）/07、PLAT-01～03、SAVE-02/05（进程中止）/08、PET-04④、FOCUS-01、STAB-01、LOG-01。
 
 `tests/unit/test_p0_acceptance_audit.gd`（纯模拟、无存档写入）与 `test_p0_acceptance_integration.gd`（独立用户目录保护）作为验收留档保留。集成套件必须在专用 `MOTE_P0_AUDIT_INTEGRATION_...` 配置中运行，正常用户配置下会拒绝执行。
 
-**测试隔离（已解决）：** `test_save.gd`、`test_app_smoke.gd` 三套涉及文件的测试现在在 `_initialize()` 首行调用 `SaveService.use_sandbox(...)`，存档与日志全部重定向到 `user://test_sandbox/<suite>/`。跑测试**不会再触碰**真实 `user://saves/`，可放心直接执行。
+**测试隔离：** `test_save.gd`、`test_app_smoke.gd` 两套测试在 `_initialize()` 调用 `SaveService.use_sandbox(...)`，存档与日志重定向到 `user://test_sandbox/<suite>/`；补充集成套件另有专用用户目录保护。本轮仍在独立工程副本中执行。
 
 ## 这是什么
 
@@ -65,11 +71,11 @@ tests\run_tests.bat
 
 | 套件 | 覆盖 | 断言数 |
 |---|---|---|
-| `test_simulation.gd` | SIM-01～04、PET-03①②③、PET-04①③；含 **P0-002 跨帧累加器**（60/75/144 FPS × 60s）与 **P0-003 陈旧事件拒奖**回归 | 38 |
+| `test_simulation.gd` | SIM-01～04、PET-03①②③、PET-04①③；含 **P0-002 跨帧累加器**（60/75/144 FPS × 60s）与 **P0-003 陈旧事件拒奖**回归 | 47 |
 | `test_animation.gd` | PET-01 真实 Skeleton2D/Bone2D 运动、PET-02 映射与失败返回 | 25 |
-| `test_save.gd` | SAVE-01/03/04/05/06/07；含 **P0-001 写入锁**（未知版本在自动保存链路中存活）与显式新建事务回归 | 128 |
-| `test_app_smoke.gd` | 主场景装配、启动模式、受控时钟、保存链路、退出事务；含 **P0-005 单击/双击/拖动互斥**回归 | 30 |
-| **合计** | | **221** |
+| `test_save.gd` | SAVE-01/03/04/05/06/07；含 **P0-001 写入锁**（未知版本在自动保存链路中存活）与显式新建事务回归 | 119 |
+| `test_app_smoke.gd` | 主场景装配、启动模式、受控时钟、保存链路、退出事务；含 **P0-005 单击/双击/拖动互斥**、**P0-006 隐藏失败不分裂**与 **FULL 布局不裁切**回归 | 39 |
+| **合计** | | **230** |
 
 新增/修改脚本后若报 “Identifier/class not found”，先刷新类缓存：
 
@@ -108,11 +114,11 @@ tests\run_tests.bat
 | 阶段 | 内容 | 状态 |
 |---|---|---|
 | 1 | 工程骨架、版本锁定、Git 初始化 | 已完成 |
-| 2 | 核心纯逻辑：PetState / PetSimulation / UtilityAI / ActionExecutor | 已完成（P0-002 时钟、P0-003 实例事件已修复，38 断言全绿） |
-| 3 | WindowController / FocusController / AppController / RecoveryEntry（窗口、穿透、恢复） | 代码已完成（P0-004 透明、P0-005 双击已修复；穿透/恢复/双屏仍待导出构建实机验证） |
+| 2 | 核心纯逻辑：PetState / PetSimulation / UtilityAI / ActionExecutor | 已实现（模拟套件 47 条及补充回归通过；原生时钟持续推进已观察） |
+| 3 | WindowController / FocusController / AppController / RecoveryEntry（窗口、穿透、恢复） | 透明/双击基本实测通过；P0-006 隐藏失败，穿透/恢复/平台仍待完整验证 |
 | 4 | 骨骼测试角色与四种动画 | 已完成（25 断言全绿） |
-| 5 | SaveService JSON 安全存档 | 已完成（P0-001 写入锁已修复，128 断言全绿） |
-| 6 | 隔离测试与运行文档闭环 | 已完成（三套文件类测试沙箱化，221 断言全绿） |
+| 5 | SaveService JSON 安全存档 | 已实现（存档套件 119 条及未知版本启动保护补充检查通过） |
+| 6 | 隔离测试与运行文档闭环 | 自动部分通过；独立复验发现隐藏阻塞，完整 P0 尚未闭环 |
 
 验收标准与完成门槛见 `docs/p0_acceptance.md` §7；最新 31 项执行状态以独立验收报告为准，不得以「代码写好了」或单元测试通过代替完整用例与实机证据。
 
@@ -159,6 +165,11 @@ git push
   - `Bone2D.rest` 默认全零（det=0），不显式设置会在骨架求逆时报错；本工程已在 `scenes/pet/pet.tscn` 为每根骨骼设置 rest。
 - 恢复入口采用「原生托盘优先 → 失败则建立独立常驻小窗口」的双层策略；即使托盘不可用也不退化为仅窗口内按钮（架构 §4.1）。
 - `Window.unfocusable` 存在（探针确认），用于实现 `allow_focus` 策略：FLOATING/FOCUS/HIDDEN 不夺焦点，FULL 接受焦点。
+- **主窗口禁止改 `visible`**（P0-006，window.cpp:1017 报 `Can't change visibility of main window.`）。
+  隐藏必须走 `DisplayServer.window_set_mode(MINIMIZED)` 并**回读校验**；`WINDOW_HANDLE` 原生句柄可用，留作 P1 托盘级隐藏备选。
+- **`canvas_items` 拉伸会缩小 UI 画布**：基线 256×256 + 窗口 960×640 时缩放 2.5×，画布只有 384×256——
+  按钮压行溢出、诊断区塌成 0、宠物被放大 2.5 倍。本工程已改 `stretch/mode="disabled"`（窗口像素 = 画布单位）。
+- 测量 Control 布局必须在**重排完成后**（切模式后多等几帧），同帧测量拿到的是重排前的最小尺寸。
 
 ## 诊断入口（架构 §8）
 

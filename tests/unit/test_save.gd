@@ -89,7 +89,8 @@ func test_roundtrip_and_identity() -> void:
 	var loaded: Dictionary = result["snapshot"] as Dictionary
 	var loaded_pet: Dictionary = loaded["pet"] as Dictionary
 	_check(str(loaded_pet["pet_id"]) == pet_id, "SAVE-01 pet_id 恢复")
-	_check(str(loaded_pet["created_at"]) == created_at, "SAVE-01 created_at 不因加载改变")
+	_check(str(loaded_pet["created_at"]) == created_at,
+		"SAVE-01 created_at 不因加载改变（期望 %s 实际 %s）" % [created_at, str(loaded_pet["created_at"])])
 	_check(is_equal_approx(float((loaded_pet["needs"] as Dictionary)["energy"]), 62.5),
 		"SAVE-01 needs.energy 往返一致")
 	_check(is_equal_approx(float((loaded_pet["needs"] as Dictionary)["hunger"]), 33.25),

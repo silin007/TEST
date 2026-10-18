@@ -1,0 +1,21 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+MEASURE SIM-02 fps=15 ticks=599 elapsed=59.900000 energy=79.401000
+PASS SIM-02 15FPS: 60s must advance 600 +/- 1 ticks
+PASS SIM-02 15FPS: simulated elapsed must reach 60s
+PASS SIM-02 15FPS: idle energy must reach 79.4
+MEASURE SIM-02 fps=30 ticks=600 elapsed=60.000000 energy=79.400000
+PASS SIM-02 30FPS: 60s must advance 600 +/- 1 ticks
+PASS SIM-02 30FPS: simulated elapsed must reach 60s
+PASS SIM-02 30FPS: idle energy must reach 79.4
+MEASURE SIM-02 fps=60 ticks=599 elapsed=59.900000 energy=79.401000
+PASS SIM-02 60FPS: 60s must advance 600 +/- 1 ticks
+PASS SIM-02 60FPS: simulated elapsed must reach 60s
+PASS SIM-02 60FPS: idle energy must reach 79.4
+PASS PET-04: initial happy request accepted
+PASS PET-04: replacement walk started
+PASS PET-04: action instance IDs increase even within one tick
+MEASURE PET-04 old_id=1 new_ids=[2] before_action=walk after_action=walk comfort_before=50.000 comfort_after=50.000
+PASS PET-04: stale completion must not stop replacement action
+PASS PET-04: cancelled old action must not earn a late reward
+AUDIT RESULT: checks=14 failures=0

@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-18",
+  "base_commit": "08df5df4ae8f5dbb3113e0db8997fd31d18fec1c",
+  "windows": {
+    "Caption": "Microsoft Windows 11 家庭版 中文版",
+    "Version": "10.0.26200",
+    "BuildNumber": "26200"
+  },
+  "gpus": [
+    {
+      "Name": "NVIDIA GeForce RTX 4070 Laptop GPU",
+      "DriverVersion": "32.0.16.1664"
+    },
+    {
+      "Name": "Intel(R) UHD Graphics",
+      "DriverVersion": "32.0.101.6556"
+    }
+  ],
+  "engine": "4.7.2.stable.official.ed1daf0bf",
+  "render_method": "mobile",
+  "render_driver": "d3d12",
+  "source_project_sha256": "D5ADF9C1F317DD65352289F7CEDF89C16553918AE53383CF48DF51DC5B4040C7",
+  "product_working_tree_unchanged": true
+}

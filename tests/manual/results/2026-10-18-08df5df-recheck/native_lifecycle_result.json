@@ -1,0 +1,47 @@
+{
+	"checks": 5,
+	"display_driver": "Windows",
+	"failures": 1,
+	"measurements": [
+		{
+			"mode": "FULL",
+			"mouse_mode": "INTERACTIVE",
+			"passed": true,
+			"recovery_ready": true,
+			"stage": "initial_full",
+			"visible": true
+		},
+		{
+			"mode": "HIDDEN",
+			"mouse_mode": "PASSTHROUGH",
+			"passed": false,
+			"recovery_ready": true,
+			"stage": "hidden_from_full",
+			"visible": true
+		},
+		{
+			"mode": "FULL",
+			"mouse_mode": "INTERACTIVE",
+			"passed": true,
+			"recovery_ready": true,
+			"stage": "show_pet_after_hidden_full",
+			"visible": true
+		},
+		{
+			"mode": "FULL",
+			"mouse_mode": "INTERACTIVE",
+			"passed": true,
+			"recovery_ready": true,
+			"stage": "open_full_after_hidden",
+			"visible": true
+		},
+		{
+			"mode": "FLOATING",
+			"mouse_mode": "INTERACTIVE",
+			"passed": true,
+			"recovery_ready": true,
+			"stage": "restore_interaction_fallback",
+			"visible": true
+		}
+	]
+}

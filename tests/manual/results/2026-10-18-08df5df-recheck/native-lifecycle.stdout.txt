@@ -1,0 +1,10 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+D3D12 12_0 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce RTX 4070 Laptop GPU
+
+[MOTE] action_started look_around #1
+PASS {"mode":"FULL","mouse_mode":"INTERACTIVE","passed":true,"recovery_ready":true,"stage":"initial_full","visible":true}
+FAIL {"mode":"HIDDEN","mouse_mode":"PASSTHROUGH","passed":false,"recovery_ready":true,"stage":"hidden_from_full","visible":true}
+PASS {"mode":"FULL","mouse_mode":"INTERACTIVE","passed":true,"recovery_ready":true,"stage":"show_pet_after_hidden_full","visible":true}
+PASS {"mode":"FULL","mouse_mode":"INTERACTIVE","passed":true,"recovery_ready":true,"stage":"open_full_after_hidden","visible":true}
+PASS {"mode":"FLOATING","mouse_mode":"INTERACTIVE","passed":true,"recovery_ready":true,"stage":"restore_interaction_fallback","visible":true}
+NATIVE LIFECYCLE RESULT: checks=5 failures=1

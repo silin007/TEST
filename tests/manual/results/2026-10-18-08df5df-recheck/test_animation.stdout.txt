@@ -1,0 +1,32 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS PET-01 实例化 pet.tscn
+PASS PET-01 存在 Skeleton2D
+PASS PET-01 存在 Bone2D 层级 Root/Body/Head
+PASS PET-01 存在左右手臂骨骼
+PASS PET-01 存在 AnimationPlayer
+PASS PET-02 根节点为 AnimationController
+PASS PET-01 动画存在: idle
+PASS PET-01 动画存在: walk
+PASS PET-01 动画存在: rest
+PASS PET-01 动画存在: happy
+PASS PET-02 映射 idle -> idle
+PASS PET-02 映射 walk -> walk
+PASS PET-02 映射 rest -> rest
+PASS PET-02 映射 look_around -> idle
+PASS PET-02 映射 react_happy -> happy
+PASS PET-02 未知行为回退 idle 且返回 true
+  sample idle: body=0.0200 arm=0.0320
+  sample walk: body=0.0600 arm=-0.5000
+  sample rest: body=0.1800 arm=-0.2500
+  sample happy: body=-0.1333 arm=-0.5333
+PASS PET-01 rest 与 idle 的 Body 旋转不同
+PASS PET-01 walk 与 idle 的 ArmLeft 旋转不同
+PASS PET-01 rest 存在非零骨骼旋转
+PASS PET-01 walk 存在非零骨骼旋转
+PASS PET-02 happy 为单次播放
+PASS PET-02 idle 为循环播放
+PASS PET-02 set_facing(-1) 翻转
+PASS PET-02 set_facing(1) 复位
+PASS PET-02 缺少播放资源时返回 false
+ALL ANIMATION TESTS PASSED

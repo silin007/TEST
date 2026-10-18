@@ -40,6 +40,12 @@ var _can_walk: bool = true
 ## 当前模式是否接受焦点（策略 allow_focus，架构 §4）。
 ## FLOATING/FOCUS/HIDDEN 不抢焦点，避免宠物窗在用户打字时把输入焦点夺走。
 var _allow_focus: bool = false
+## 当前是否通过最小化实现隐藏（P0-006）。
+## 4.7.2 实测：主窗口执行 `win.visible = false` 会报
+## "Can't change visibility of main window."（scene/main/window.cpp:1017），
+## 因此 HIDDEN 只能走 DisplayServer 的窗口模式。该字段记录"我们确实最小化过"，
+## 使恢复路径只对由自己造成的隐藏执行还原，不去干扰用户手动最小化的窗口。
+var _hidden_by_minimize: bool = false
 
 
 func _ready() -> void:
@@ -74,6 +80,8 @@ func get_mouse_mode() -> StringName:
 
 
 ## 应用模式与策略。恢复入口未就绪时拒绝隐藏与穿透（架构 §4.1）。
+## 平台操作失败时**整体回滚**内部记录与窗口状态并返回错误码，
+## 绝不留下"应用认为已 HIDDEN、平台窗口仍在桌面上"的分裂状态（P0-006）。
 func apply_mode(mode: StringName, policy: Dictionary) -> Error:
 	if not AppMode.is_valid_mode(mode):
 		return ERR_INVALID_PARAMETER
@@ -85,8 +93,26 @@ func apply_mode(mode: StringName, policy: Dictionary) -> Error:
 	_pressing = false
 	_dragging = false
 	_drag_committed = false
+
+	# 快照原状态：平台拒绝时必须能完整还原
+	var old_mode: StringName = _mode
+	var old_mouse: StringName = _mouse_mode
+	var old_can_walk: bool = _can_walk
+	var old_allow_focus: bool = _allow_focus
+
 	_mode = mode
 	var err := _apply_native_attributes()
+	if err != OK:
+		push_error("WindowController: 平台拒绝进入 %s（%d），回滚到 %s" % [mode, err, old_mode])
+		_mode = old_mode
+		_can_walk = old_can_walk
+		_allow_focus = old_allow_focus
+		_apply_native_attributes()      # 还原窗口外观（尺寸/位置/最小化状态）
+		set_mouse_mode_internal(old_mouse)
+		validate_geometry()
+		mode_applied.emit(old_mode, _mouse_mode, err)
+		return err
+
 	var mouse_mode: StringName = policy.get("mouse_mode", AppMode.MOUSE_INTERACTIVE) as StringName
 	err = set_mouse_mode_internal(mouse_mode) if err == OK else err
 	_can_walk = bool(policy.get("can_walk", true))
@@ -153,26 +179,87 @@ func _apply_native_attributes() -> Error:
 	win.always_on_top = (_mode == AppMode.FLOATING or _mode == AppMode.FOCUS)
 	match _mode:
 		AppMode.FULL:
+			_restore_from_minimize()
 			win.size = Vector2i(_full_rect.size)
 			win.position = Vector2i(_full_rect.position)
 		AppMode.HIDDEN:
-			win.visible = false
+			return _hide_native()
 		_:
-			win.visible = true
+			_restore_from_minimize()
 			win.size = Vector2i(_floating_rect.size)
 			win.position = Vector2i(_floating_rect.position)
 	return OK
 
 
-## 恢复可见（架构 §4.1：从 HIDDEN 恢复为隐藏前的可见模式）
+## 原生隐藏（P0-006）。
+##
+## 不能用 `win.visible = false`：4.7.2 对主窗口直接报
+## "Can't change visibility of main window."，调用后 visible 仍为 true，
+## 而旧实现无条件返回 OK —— 应用因此宣称 HIDDEN 却仍在桌面上显示。
+##
+## 这里改用 DisplayServer 窗口模式最小化，并**回读校验**：只有引擎确认
+## 已进入 MINIMIZED 才返回 OK，否则返回 ERR_UNAVAILABLE 让上层放弃 HIDDEN。
+## 边界：最小化会在任务栏留下条目（是否可见取决于窗口样式），
+## 与"完全脱离任务栏的托盘隐藏"仍有差距；P0 以真实不在桌面上渲染为准。
+func _hide_native() -> Error:
+	if not _can_hide_natively():
+		push_error("WindowController: 当前平台不支持原生隐藏，拒绝进入 HIDDEN")
+		return ERR_UNAVAILABLE
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MINIMIZED, 0)
+	var mode: int = DisplayServer.window_get_mode(0)
+	if mode != DisplayServer.WINDOW_MODE_MINIMIZED:
+		# 平台未接受：不要把 _hidden_by_minimize 置真，避免恢复路径做无意义还原
+		push_error("WindowController: 最小化未生效（当前 mode=%d），隐藏失败" % mode)
+		return ERR_UNAVAILABLE
+	_hidden_by_minimize = true
+	return OK
+
+
+## 平台能力预判：无显示驱动（headless/dummy）时不存在可隐藏的窗口表面
+func _can_hide_natively() -> bool:
+	var name: String = DisplayServer.get_name()
+	if name == "headless" or name == "dummy":
+		return false
+	return DisplayServer.get_screen_count() > 0
+
+
+## 只还原由本控制器造成的最小化，不干扰用户手动最小化的窗口
+func _restore_from_minimize() -> void:
+	if not _hidden_by_minimize:
+		return
+	if DisplayServer.window_get_mode(0) == DisplayServer.WINDOW_MODE_MINIMIZED:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED, 0)
+	_hidden_by_minimize = false
+
+
+## 平台侧真实状态（供诊断与自动化断言，避免只看应用内部模式）
+func get_platform_state() -> Dictionary:
+	var win := get_window()
+	var mode: int = DisplayServer.window_get_mode(0)
+	return {
+		"window_visible": win.visible if win != null else false,
+		"window_mode": mode,
+		"minimized": mode == DisplayServer.WINDOW_MODE_MINIMIZED,
+		"hidden_by_minimize": _hidden_by_minimize,
+		"can_hide": _can_hide_natively(),
+		"display_driver": DisplayServer.get_name(),
+	}
+
+
+## 恢复可见（架构 §4.1：从 HIDDEN 恢复为隐藏前的可见模式）。
+## 不再写 `win.visible = true`：主窗口该属性恒为 true 且不可改（P0-006），
+## 真正的"显示"动作是把最小化状态还原回去。
 func restore_visible() -> Error:
 	var win := get_window()
 	if win == null:
 		return ERR_UNAVAILABLE
-	win.visible = true
+	_restore_from_minimize()
 	if _mode == AppMode.HIDDEN:
 		_mode = AppMode.FLOATING
-	return _apply_native_attributes()
+	var err: Error = _apply_native_attributes()
+	if err != OK:
+		push_error("WindowController: 恢复可见失败（%d）" % err)
+	return err
 
 
 ## —— 拖动 ——
@@ -259,6 +346,10 @@ func _sync_rect_from_window() -> void:
 func validate_geometry() -> void:
 	var win := get_window()
 	if win == null or not win.visible:
+		return
+	# 隐藏（最小化）状态下不改几何：最小化窗口的 position/size 不代表用户可见位置，
+	# 强制修正会把"隐藏前的矩形"污染成系统给最小化窗口的占位值（P0-006）。
+	if _hidden_by_minimize or DisplayServer.window_get_mode(0) == DisplayServer.WINDOW_MODE_MINIMIZED:
 		return
 	var screen := _resolve_screen()
 	var usable: Rect2i = DisplayServer.screen_get_usable_rect(screen)

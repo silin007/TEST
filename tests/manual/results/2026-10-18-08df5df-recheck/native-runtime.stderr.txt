@@ -1,0 +1,25 @@
+WARNING: No Bone2D children of node Head. Cannot calculate bone length or angle reliably.
+Using transform rotation for bone angle.
+   at: calculate_length_and_rotation (scene/2d/skeleton_2d.cpp:451)
+WARNING: No Bone2D children of node ArmLeft. Cannot calculate bone length or angle reliably.
+Using transform rotation for bone angle.
+   at: calculate_length_and_rotation (scene/2d/skeleton_2d.cpp:451)
+WARNING: No Bone2D children of node ArmRight. Cannot calculate bone length or angle reliably.
+Using transform rotation for bone angle.
+   at: calculate_length_and_rotation (scene/2d/skeleton_2d.cpp:451)
+WARNING: [MOTE] 窗口几何已修正：outside_usable_rect
+   at: push_warning (core/variant/variant_utility.cpp:1033)
+   GDScript backtrace (most recent call first):
+       [0] _on_geometry_corrected (res://scripts/app/app_controller.gd:505)
+       [1] validate_geometry (res://scripts/desktop/window_controller.gd:281)
+       [2] apply_mode (res://scripts/desktop/window_controller.gd:95)
+       [3] switch_mode (res://scripts/app/app_controller.gd:192)
+       [4] _on_pet_input_event (res://scripts/app/app_controller.gd:287)
+ERROR: Can't change visibility of main window.
+   at: set_visible (scene/main/window.cpp:1017)
+   GDScript backtrace (most recent call first):
+       [0] _apply_native_attributes (res://scripts/desktop/window_controller.gd:159)
+       [1] apply_mode (res://scripts/desktop/window_controller.gd:89)
+       [2] switch_mode (res://scripts/app/app_controller.gd:192)
+       [3] _on_panel_action (res://scripts/app/app_controller.gd:516)
+       [4] <anonymous lambda> (res://scripts/ui/full_panel.gd:86)
