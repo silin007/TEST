@@ -23,16 +23,19 @@ default_length = 34.0
 [node name="Head" type="Bone2D" parent="Skeleton2D/Root/Body"]
 position = Vector2(0, -34)
 rest = Transform2D(1, 0, 0, 1, 0, -34)
+auto_calculate_length_and_angle = false
 default_length = 20.0
 
 [node name="ArmLeft" type="Bone2D" parent="Skeleton2D/Root/Body"]
 position = Vector2(-24, -22)
 rest = Transform2D(1, 0, 0, 1, -24, -22)
+auto_calculate_length_and_angle = false
 default_length = 26.0
 
 [node name="ArmRight" type="Bone2D" parent="Skeleton2D/Root/Body"]
 position = Vector2(24, -22)
 rest = Transform2D(1, 0, 0, 1, 24, -22)
+auto_calculate_length_and_angle = false
 default_length = 26.0
 
 [node name="BodySprite" type="Polygon2D" parent="Skeleton2D/Root/Body"]
