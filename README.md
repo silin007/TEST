@@ -119,6 +119,20 @@ tests/unit/           纯逻辑自动测试（可无头运行）
 tests/manual/         桌面手工用例记录
 ```
 
+## 版本控制
+
+远程：<https://github.com/silin007/TEST.git>（分支 `master`，本地 `master` 已跟踪 `origin/master`）
+
+```bash
+git add -A
+git commit -m "描述"
+git push
+```
+
+- `.godot/`、导出产物、真实存档/日志、`.workbuddy/`（本机会话状态）均被忽略。
+- `.gitattributes` 固定行尾：文本一律 LF，`.bat/.cmd/.ps1` 强制 CRLF（cmd 无法解析 LF 批处理）。
+- 提交前建议先跑 `tests\run_tests.bat`，确认 4 个套件全绿。
+
 ## 已知环境备注（实施期实测结论）
 
 - 当前 `project.godot` 仍标记 `Mobile` + `d3d12`（继承自初始工程）。桌面窗口能力以**实际运行 + 导出构建**为准，不以配置标记为准（架构 O-03）。
